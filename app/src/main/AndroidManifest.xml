@@ -48,6 +48,8 @@
 
         <!-- 创作中心 -->
         <activity android:name=".CreateCenterActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".CreateWorkActivity" android:theme="@style/Theme.TomatoRead"
+            android:windowSoftInputMode="adjustResize" />
         <activity android:name=".EditorActivity" android:theme="@style/Theme.TomatoRead"
             android:windowSoftInputMode="adjustResize" />
 

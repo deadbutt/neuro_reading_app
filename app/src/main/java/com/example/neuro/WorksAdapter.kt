@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 data class WorkItem(
-    val workId: String,
+    val articleId: String,
     val title: String,
     val summary: String,
     val cover: String,

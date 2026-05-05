@@ -34,7 +34,7 @@ class CreateCenterActivity : AppCompatActivity() {
         llEmpty = findViewById(R.id.ll_empty)
 
         worksAdapter = WorksAdapter(works) { work, _ ->
-            EditorActivity.start(this, work.workId, work.title)
+            EditorActivity.start(this, work.articleId, work.title)
         }
         rvWorks.layoutManager = LinearLayoutManager(this)
         rvWorks.adapter = worksAdapter
@@ -46,7 +46,7 @@ class CreateCenterActivity : AppCompatActivity() {
         }
 
         findViewById<LinearLayout>(R.id.ll_create_work).setOnClickListener {
-            EditorActivity.start(this, null, null)
+            CreateWorkActivity.start(this)
         }
 
         findViewById<LinearLayout>(R.id.ll_upload_file).setOnClickListener {
@@ -63,7 +63,7 @@ class CreateCenterActivity : AppCompatActivity() {
                     works.clear()
                     works.addAll(list.map {
                         WorkItem(
-                            workId = it.workId,
+                            articleId = it.articleId,
                             title = it.title,
                             summary = it.summary,
                             cover = it.cover,
@@ -76,8 +76,12 @@ class CreateCenterActivity : AppCompatActivity() {
                     llEmpty.visibility = if (works.isEmpty()) View.VISIBLE else View.GONE
                 }
             } catch (e: Exception) {
-                // 静默失败
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadMyWorks()
     }
 }

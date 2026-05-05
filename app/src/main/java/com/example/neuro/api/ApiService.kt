@@ -164,40 +164,68 @@ interface ApiService {
 
     // ==================== 创作中心 ====================
 
-    @GET("api/v1/works/my")
+    @GET("api/v1/creator/works")
     suspend fun getMyWorks(
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 20,
         @Query("status") status: String = "all"
     ): Response<BaseResponse<MyWorksResponse>>
 
-    @POST("api/v1/works")
+    @POST("api/v1/creator/works")
     suspend fun createWork(
         @Body request: CreateWorkRequest
     ): Response<BaseResponse<CreateWorkResponse>>
 
-    @POST("api/v1/works/{workId}/chapters")
+    @GET("api/v1/creator/works/{workId}")
+    suspend fun getWorkDetail(
+        @Path("workId") workId: String
+    ): Response<BaseResponse<WorkDetailResponse>>
+
+    @PUT("api/v1/creator/works/{workId}")
+    suspend fun updateWork(
+        @Path("workId") workId: String,
+        @Body request: UpdateWorkRequest
+    ): Response<BaseResponse<Unit>>
+
+    @DELETE("api/v1/creator/works/{workId}")
+    suspend fun deleteWork(
+        @Path("workId") workId: String
+    ): Response<BaseResponse<Unit>>
+
+    @POST("api/v1/creator/works/{workId}/publish")
+    suspend fun publishWork(
+        @Path("workId") workId: String
+    ): Response<BaseResponse<PublishWorkResponse>>
+
+    @POST("api/v1/creator/works/{workId}/chapters")
     suspend fun createChapter(
         @Path("workId") workId: String,
         @Body request: CreateChapterRequest
     ): Response<BaseResponse<ChapterResponse>>
 
-    @PUT("api/v1/works/{workId}/chapters/{chapterId}")
-    suspend fun updateChapter(
-        @Path("workId") workId: String,
-        @Path("chapterId") chapterId: String,
-        @Body request: UpdateChapterRequest
-    ): Response<BaseResponse<ChapterResponse>>
-
-    @GET("api/v1/works/{workId}/chapters/{chapterId}")
+    @GET("api/v1/creator/works/{workId}/chapters/{chapterIndex}")
     suspend fun getChapterForEdit(
         @Path("workId") workId: String,
-        @Path("chapterId") chapterId: String
+        @Path("chapterIndex") chapterIndex: Int
     ): Response<BaseResponse<ChapterDetailResponse>>
 
+    @PUT("api/v1/creator/works/{workId}/chapters/{chapterIndex}")
+    suspend fun updateChapter(
+        @Path("workId") workId: String,
+        @Path("chapterIndex") chapterIndex: Int,
+        @Body request: UpdateChapterRequest
+    ): Response<BaseResponse<Unit>>
+
+    @DELETE("api/v1/creator/works/{workId}/chapters/{chapterIndex}")
+    suspend fun deleteChapter(
+        @Path("workId") workId: String,
+        @Path("chapterIndex") chapterIndex: Int
+    ): Response<BaseResponse<Unit>>
+
     @Multipart
-    @POST("api/v1/upload/cover")
-    suspend fun uploadCover(
-        @Part file: MultipartBody.Part
-    ): Response<BaseResponse<UploadAvatarResponse>>
+    @POST("api/v1/creator/works/upload/docx")
+    suspend fun uploadDocx(
+        @Part file: MultipartBody.Part,
+        @Part("title") title: okhttp3.RequestBody?
+    ): Response<BaseResponse<UploadDocxResponse>>
 }

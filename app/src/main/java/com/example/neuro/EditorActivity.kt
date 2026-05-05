@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
-import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.StyleSpan
 import android.text.style.RelativeSizeSpan
@@ -25,15 +24,15 @@ import kotlinx.coroutines.withContext
 class EditorActivity : AppCompatActivity() {
 
     companion object {
-        private const val EXTRA_WORK_ID = "work_id"
+        private const val EXTRA_ARTICLE_ID = "article_id"
         private const val EXTRA_WORK_TITLE = "work_title"
-        private const val EXTRA_CHAPTER_ID = "chapter_id"
+        private const val EXTRA_CHAPTER_INDEX = "chapter_index"
 
-        fun start(context: Context, workId: String?, workTitle: String?, chapterId: String? = null) {
+        fun start(context: Context, articleId: String?, workTitle: String?, chapterIndex: Int? = null) {
             context.startActivity(Intent(context, EditorActivity::class.java).apply {
-                putExtra(EXTRA_WORK_ID, workId)
+                putExtra(EXTRA_ARTICLE_ID, articleId)
                 putExtra(EXTRA_WORK_TITLE, workTitle)
-                putExtra(EXTRA_CHAPTER_ID, chapterId)
+                chapterIndex?.let { putExtra(EXTRA_CHAPTER_INDEX, it) }
             })
         }
     }
@@ -45,23 +44,23 @@ class EditorActivity : AppCompatActivity() {
     private lateinit var tvSave: TextView
     private lateinit var tvPublish: TextView
 
-    private var workId: String? = null
-    private var chapterId: String? = null
+    private var articleId: String? = null
+    private var chapterIndex: Int? = null
     private var isNewChapter = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_editor)
 
-        workId = intent.getStringExtra(EXTRA_WORK_ID)
-        chapterId = intent.getStringExtra(EXTRA_CHAPTER_ID)
-        isNewChapter = chapterId == null
+        articleId = intent.getStringExtra(EXTRA_ARTICLE_ID)
+        chapterIndex = if (intent.hasExtra(EXTRA_CHAPTER_INDEX)) intent.getIntExtra(EXTRA_CHAPTER_INDEX, -1) else null
+        isNewChapter = chapterIndex == null
 
         initViews()
         setupClickListeners()
         setupTextWatcher()
 
-        if (!workId.isNullOrBlank()) {
+        if (!articleId.isNullOrBlank() && chapterIndex != null) {
             loadChapter()
         }
     }
@@ -84,11 +83,11 @@ class EditorActivity : AppCompatActivity() {
         }
 
         tvSave.setOnClickListener {
-            saveChapter("draft")
+            saveChapter()
         }
 
         tvPublish.setOnClickListener {
-            saveChapter("published")
+            publishWork()
         }
 
         findViewById<ImageView>(R.id.iv_bold).setOnClickListener {
@@ -120,23 +119,22 @@ class EditorActivity : AppCompatActivity() {
     }
 
     private fun loadChapter() {
-        if (chapterId.isNullOrBlank()) return
+        if (articleId.isNullOrBlank() || chapterIndex == null) return
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getChapterForEdit(workId!!, chapterId!!)
+                val response = RetrofitClient.apiService.getChapterForEdit(articleId!!, chapterIndex!!)
                 if (response.isSuccessful && response.body()?.code == 0) {
                     val data = response.body()?.data
                     etChapterTitle.setText(data?.title)
                     etContent.setText(data?.content)
                 }
             } catch (e: Exception) {
-                // 静默失败
             }
         }
     }
 
-    private fun saveChapter(status: String) {
+    private fun saveChapter() {
         val title = etChapterTitle.text.toString().trim()
         val content = etContent.text.toString().trim()
 
@@ -150,24 +148,82 @@ class EditorActivity : AppCompatActivity() {
             return
         }
 
+        if (articleId.isNullOrBlank()) {
+            Toast.makeText(this, "作品ID无效", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         lifecycleScope.launch {
             try {
-                val response = if (isNewChapter) {
-                    val request = CreateChapterRequest(title, content, status)
-                    RetrofitClient.apiService.createChapter(workId!!, request)
+                if (isNewChapter) {
+                    val request = CreateChapterRequest(title, content)
+                    val response = RetrofitClient.apiService.createChapter(articleId!!, request)
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful && response.body()?.code == 0) {
+                            Toast.makeText(this@EditorActivity, "保存成功", Toast.LENGTH_SHORT).show()
+                            isNewChapter = false
+                            chapterIndex = response.body()?.data?.index ?: 0
+                        } else {
+                            Toast.makeText(this@EditorActivity, "保存失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 } else {
-                    val request = UpdateChapterRequest(title, content, status)
-                    RetrofitClient.apiService.updateChapter(workId!!, chapterId!!, request)
+                    val request = UpdateChapterRequest(title, content)
+                    val response = RetrofitClient.apiService.updateChapter(articleId!!, chapterIndex!!, request)
+                    withContext(Dispatchers.Main) {
+                        if (response.isSuccessful && response.body()?.code == 0) {
+                            Toast.makeText(this@EditorActivity, "保存成功", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@EditorActivity, "保存失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@EditorActivity, "网络错误", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun publishWork() {
+        if (articleId.isNullOrBlank()) {
+            Toast.makeText(this, "作品ID无效", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val title = etChapterTitle.text.toString().trim()
+        val content = etContent.text.toString().trim()
+
+        if (title.isBlank() || content.isBlank()) {
+            Toast.makeText(this, "请先填写章节标题和内容", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                if (isNewChapter) {
+                    val request = CreateChapterRequest(title, content)
+                    val saveResponse = RetrofitClient.apiService.createChapter(articleId!!, request)
+                    if (!saveResponse.isSuccessful || saveResponse.body()?.code != 0) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@EditorActivity, "保存章节失败", Toast.LENGTH_SHORT).show()
+                        }
+                        return@launch
+                    }
+                    isNewChapter = false
+                    chapterIndex = saveResponse.body()?.data?.index ?: 0
                 }
 
+                val response = RetrofitClient.apiService.publishWork(articleId!!)
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body()?.code == 0) {
-                        val msg = if (status == "published") "发布成功" else "保存成功"
-                        Toast.makeText(this@EditorActivity, msg, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EditorActivity, "发布成功", Toast.LENGTH_SHORT).show()
                         setResult(RESULT_OK)
                         finish()
                     } else {
-                        Toast.makeText(this@EditorActivity, "保存失败", Toast.LENGTH_SHORT).show()
+                        val msg = response.body()?.message ?: "发布失败"
+                        Toast.makeText(this@EditorActivity, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
