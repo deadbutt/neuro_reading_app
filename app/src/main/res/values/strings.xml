@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">番茄阅读</string>
+    <string name="app_name">牛言牛语</string>
     <string name="search_hint">搜书名、作者…</string>
     <string name="tab_recommend">推荐</string>
     <string name="tab_hot">热门</string>
