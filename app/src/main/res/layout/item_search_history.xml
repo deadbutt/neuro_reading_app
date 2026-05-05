@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_search_history_tag"
+    android:gravity="center"
+    android:paddingStart="@dimen/search_history_tag_padding_h"
+    android:paddingEnd="@dimen/search_history_tag_padding_h"
+    android:paddingTop="@dimen/search_history_tag_padding_v"
+    android:paddingBottom="@dimen/search_history_tag_padding_v"
+    android:textColor="@color/tab_inactive"
+    android:textSize="@dimen/search_history_tag_text_size" />

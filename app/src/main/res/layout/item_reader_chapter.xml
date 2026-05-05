@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/reader_chapter_item_height"
+    android:background="?attr/selectableItemBackground"
+    android:paddingStart="@dimen/padding_horizontal"
+    android:paddingEnd="@dimen/padding_horizontal">
+
+    <ImageView
+        android:id="@+id/iv_chapter_current_dot"
+        android:layout_width="@dimen/reader_chapter_current_dot"
+        android:layout_height="@dimen/reader_chapter_current_dot"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/reader_drawer_title"
+        android:src="@drawable/bg_hot_dot"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_chapter_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="6dp"
+        android:layout_toEndOf="@id/iv_chapter_current_dot"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/reader_chapter_text_size" />
+
+</RelativeLayout>

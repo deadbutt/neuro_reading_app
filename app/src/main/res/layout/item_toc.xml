@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:minHeight="@dimen/reader_chapter_item_height"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/padding_horizontal"
+    android:paddingEnd="@dimen/padding_horizontal"
+    android:paddingTop="13dp"
+    android:paddingBottom="13dp">
+
+    <ImageView
+        android:id="@+id/iv_toc_current_dot"
+        android:layout_width="@dimen/toc_reading_dot_size"
+        android:layout_height="@dimen/toc_reading_dot_size"
+        android:layout_gravity="center_vertical"
+        android:contentDescription="@string/toc_reading"
+        android:src="@drawable/bg_reading_dot"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_toc_chapter_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/reader_chapter_text_size" />
+
+    <TextView
+        android:id="@+id/tv_toc_tag_reading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_toc_reading_tag"
+        android:gravity="center"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:text="@string/toc_reading"
+        android:textColor="@color/white"
+        android:textSize="@dimen/text_micro"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_toc_tag_trial"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_toc_trial_tag"
+        android:gravity="center"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:text="@string/toc_trial"
+        android:textColor="@color/trial_tag_text"
+        android:textSize="@dimen/text_micro"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tv_toc_tag_vip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_vip_tag"
+        android:gravity="center"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:text="@string/toc_vip"
+        android:textColor="@color/vip_tag_text"
+        android:textSize="@dimen/text_micro"
+        android:visibility="gone" />
+
+</LinearLayout>

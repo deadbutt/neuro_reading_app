@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">番茄阅读</string>
+    <string name="search_hint">搜书名、作者…</string>
+    <string name="tab_recommend">推荐</string>
+    <string name="tab_hot">热门</string>
+    <string name="tab_latest">最新</string>
+    <string name="quick_category">分类</string>
+    <string name="quick_rank">榜单</string>
+    <string name="quick_bookstore">书城</string>
+    <string name="quick_mine">我的</string>
+    <string name="section_recommend">推荐文章</string>
+    <string name="bottom_home">首页</string>
+    <string name="bottom_bookstore">书城</string>
+    <string name="bottom_reading">在读</string>
+    <string name="bottom_bookshelf">书架</string>
+    <string name="bottom_mine">我的</string>
+
+    <string name="book_title_1">斗破苍穹</string>
+    <string name="book_author_1">天蚕土豆</string>
+    <string name="book_desc_1">天才少年沦为废柴，受尽冷眼与嘲讽。当戒指中的药老出现，一切都将改变…</string>
+    <string name="book_hot_1">320万人在读</string>
+    <string name="book_title_2">斗罗大陆</string>
+    <string name="book_author_2">唐家三少</string>
+    <string name="book_desc_2">唐门外门弟子唐三，因偷学内门绝学为唐门所不容。跳崖明志后穿越到斗罗大陆…</string>
+    <string name="book_hot_2">280万人在读</string>
+    <string name="book_title_3">凡人修仙传</string>
+    <string name="book_author_3">忘语</string>
+    <string name="book_desc_3">一个普通的山村穷小子，偶然之下进入江湖小门派，虽资质平庸但依靠自身努力…</string>
+    <string name="book_hot_3">450万人在读</string>
+    <string name="book_add_shelf">加入书架</string>
+
+    <string name="detail_title">书籍详情</string>
+    <string name="detail_author">作者：天蚕土豆</string>
+    <string name="detail_word_count">520万字</string>
+    <string name="detail_readers">320万人在读</string>
+    <string name="detail_rating">9.6</string>
+    <string name="detail_rating_count">1.2万评</string>
+    <string name="detail_start_reading">开始阅读</string>
+    <string name="detail_synopsis_title">简介</string>
+    <string name="detail_synopsis_expand">展开</string>
+    <string name="detail_synopsis_content">天才少年萧炎在创造了家族空前绝后的修炼纪录后，突然成了废人。整整三年时间，受尽旁人冷眼与嘲讽。直到某天，戴在手指上的戒指里突然出现了一位神秘老者——药老。在药老的指导和帮助下，萧炎重新踏上修炼之途，一步一步走向巅峰。</string>
+
+    <string name="detail_tag_xuanhuan">玄幻</string>
+    <string name="detail_tag_rexue">热血</string>
+    <string name="detail_tag_wanben">完本</string>
+    <string name="detail_tag_baokuan">爆款</string>
+    <string name="detail_tag_xiuzhen">修真</string>
+    <string name="detail_tag_dashen">大神</string>
+
+    <string name="detail_toc_title">目录</string>
+    <string name="detail_toc_view_all">查看全部 &gt;</string>
+    <string name="detail_toc_trial">试读</string>
+    <string name="detail_toc_ch1">第一章 陨落的天才</string>
+    <string name="detail_toc_ch2">第二章 斗气大陆</string>
+    <string name="detail_toc_ch3">第三章 客人</string>
+    <string name="detail_toc_ch4">第四章 云岚宗</string>
+    <string name="detail_toc_ch5">第五章 聚气散</string>
+
+    <string name="detail_reviews_title">书友点评</string>
+    <string name="detail_review_name_1">书虫小明</string>
+    <string name="detail_review_content_1">土豆大大的经典之作！看了三遍还是觉得热血沸腾，萧炎的成长之路太燃了，强烈推荐！</string>
+    <string name="detail_review_likes_1">2.3万</string>
+    <string name="detail_review_name_2">追更达人</string>
+    <string name="detail_review_content_2">从第一章追到完结，陪伴了我整个高中时代。药老和萧炎的师徒情谊令人动容，值得反复品味。</string>
+    <string name="detail_review_likes_2">1.8万</string>
+
+    <string name="detail_comment_hint">说点什么吧…</string>
+
+    <string name="comments_title">书评</string>
+    <string name="comments_count">128条</string>
+    <string name="comments_sort_hot">最热</string>
+    <string name="comments_sort_new">最新</string>
+    <string name="comments_sort_author">作者回复</string>
+    <string name="comments_hint">说点什么吧…</string>
+    <string name="comments_send">发送</string>
+    <string name="comments_reply">回复</string>
+    <string name="comment_author_badge">作者</string>
+
+    <string name="comment_name_1">书虫小明</string>
+    <string name="comment_time_1">3小时前</string>
+    <string name="comment_content_1">土豆大大的经典之作！看了三遍还是觉得热血沸腾，萧炎的成长之路太燃了，强烈推荐！</string>
+    <string name="comment_likes_1">2.3万</string>
+    <string name="comment_name_2">追更达人</string>
+    <string name="comment_time_2">5小时前</string>
+    <string name="comment_content_2">从第一章追到完结，陪伴了我整个高中时代。药老和萧炎的师徒情谊令人动容，值得反复品味。</string>
+    <string name="comment_likes_2">1.8万</string>
+    <string name="comment_name_3">天蚕土豆</string>
+    <string name="comment_time_3">1天前</string>
+    <string name="comment_content_3">感谢大家的支持与喜爱，新书《大主宰》已经同步上线，敬请期待更多精彩！</string>
+    <string name="comment_likes_3">5.6万</string>
+    <string name="comment_name_4">读书达人</string>
+    <string name="comment_time_4">2天前</string>
+    <string name="comment_content_4">世界观宏大，人物塑造丰满，战斗场面描写极其精彩，值得每个玄幻小说爱好者反复阅读。</string>
+    <string name="comment_likes_4">9800</string>
+
+    <string name="profile_click_login">点击登录</string>
+    <string name="profile_login_desc">登录后可同步阅读记录</string>
+    <string name="profile_shelf_count">书架收藏</string>
+    <string name="profile_shelf_num">12</string>
+    <string name="profile_time_count">阅读时长</string>
+    <string name="profile_time_num">56h</string>
+    <string name="profile_coin_count">牛币</string>
+    <string name="profile_coin_num">888</string>
+    <string name="profile_menu_history">阅读历史</string>
+    <string name="profile_menu_cache">离线缓存</string>
+    <string name="profile_menu_rewards">福利中心</string>
+    <string name="profile_menu_night">夜间模式</string>
+    <string name="profile_menu_help">帮助反馈</string>
+    <string name="profile_menu_settings">设置</string>
+
+    <string name="reader_chapter_title">第一章 陨落的天才</string>
+    <string name="reader_body_placeholder">第一章 陨落的天才\n\n　　斗之力，三段！\n\n　　望着测验魔石碑上面闪亮得甚至有些刺眼的五个大字，少年面无表情，唇角有着一抹自嘲，紧握的手掌，因为大力，而导致略微尖锐的指甲深深的刺进了掌心之中，带来一阵阵钻心的疼痛…\n\n　　"萧炎，斗之力，三段！级别：低级！"测验魔石碑之旁，一位中年男子，看了一眼碑上所显示出来的信息，语气漠然的将之公布了出来…\n\n　　中年男子话刚刚脱口，便是不出意外的在人头汹涌的广场上带起了一阵嘲讽的骚动。\n\n　　"三段？嘿嘿，果然不出我所料，这个"天才"这一年又是在原地踏步！"\n\n　　"哎，这废物真是把家族的脸都给丢光了。"\n\n　　"要不是族长是他的父亲，这种废物，早就被驱赶出家族，任其自生自灭了，哪还有机会待在家族中白吃白喝。"\n\n　　"唉，昔年那名闻乌坦城的天才少年，如今怎么落魄成这般模样了啊？"\n\n　　"谁知道呢，或许做了什么亏心事，惹得神灵降怒了吧…"\n\n　　周围传来的不屑嘲笑以及惋惜轻叹，落在那如木桩待在原地的少年耳中，恍如一根根利刺狠狠的扎在心脏一般，让得少年呼吸微微急促。\n\n　　少年缓缓抬起头来，露出一张有些清秀的稚嫩脸庞，漆黑的眸子木然的在周围那些嘲讽的同龄人身上扫过，少年嘴角的自嘲，似乎变得更加苦涩了。\n\n　　"这些人，都如此刻薄势力吗？或许是因为三年前他们曾经在自己面前露出过最谦卑的笑容，所以，如今想要讨还回去吧…"苦笑着摇了摇头，萧炎落寞的转身，安静的回到了队伍的最后一排，孤单的身影，与周围的世界，有些格格不入。</string>
+    <string name="reader_drawer_title">目录</string>
+    <string name="reader_ch1">第一章 陨落的天才</string>
+    <string name="reader_ch2">第二章 斗气大陆</string>
+    <string name="reader_ch3">第三章 客人</string>
+    <string name="reader_ch4">第四章 云岚宗</string>
+    <string name="reader_ch5">第五章 聚气散</string>
+    <string name="reader_ch6">第六章 炼药师</string>
+    <string name="reader_ch7">第七章 休</string>
+    <string name="reader_ch8">第八章 神秘老爷爷</string>
+    <string name="reader_ch9">第九章 焚诀</string>
+    <string name="reader_ch10">第十章 离开</string>
+    <string name="reader_progress">本章进度</string>
+
+    <string name="shelf_title">在读文章</string>
+    <string name="shelf_edit">编辑</string>
+    <string name="shelf_done">完成</string>
+    <string name="shelf_tab_reading">在读</string>
+    <string name="shelf_tab_read">读过</string>
+    <string name="shelf_tab_subscribe">订阅</string>
+    <string name="shelf_empty_title">暂无书籍</string>
+    <string name="shelf_empty_hint">快去书城逛逛，把喜欢的书加入书架吧</string>
+    <string name="shelf_empty_btn">去逛逛</string>
+    <string name="shelf_select_all">全选</string>
+    <string name="shelf_delete">删除</string>
+    <string name="shelf_progress">已读</string>
+    <string name="shelf_tag_xuanhuan">玄幻</string>
+    <string name="shelf_tag_dushi">都市</string>
+    <string name="shelf_tag_xiuzhen">修真</string>
+    <string name="shelf_tag_lishi">历史</string>
+
+    <string name="search_cancel">取消</string>
+    <string name="search_history_title">历史搜索</string>
+    <string name="search_history_clear">清空</string>
+    <string name="search_hot_title">热门推荐</string>
+    <string name="search_result_found">找到 %d 本书</string>
+    <string name="search_no_result">未找到相关书籍</string>
+    <string name="search_no_result_hint">换个关键词试试吧</string>
+    <string name="search_history_tag_1">斗破苍穹</string>
+    <string name="search_history_tag_2">凡人修仙传</string>
+    <string name="search_history_tag_3">斗罗大陆</string>
+    <string name="search_history_tag_4">诡秘之主</string>
+    <string name="search_history_tag_5">全职高手</string>
+    <string name="search_history_tag_6">雪中悍刀行</string>
+
+    <string name="toc_title_format">剑来·目录</string>
+    <string name="toc_stats">共 1248 章 | 最近更新 第1020章 天人感应</string>
+    <string name="toc_sort_asc">正序</string>
+    <string name="toc_sort_desc">倒序</string>
+    <string name="toc_vip">VIP</string>
+    <string name="toc_trial">试读</string>
+    <string name="toc_reading">正在阅读</string>
+    <string name="toc_chapter_1">第一章 陨落的天才</string>
+    <string name="toc_chapter_2">第二章 斗气大陆</string>
+    <string name="toc_chapter_3">第三章 客人</string>
+    <string name="toc_chapter_4">第四章 云岚宗</string>
+    <string name="toc_chapter_5">第五章 聚气散</string>
+    <string name="toc_chapter_6">第六章 炼药师</string>
+    <string name="toc_chapter_7">第七章 休</string>
+    <string name="toc_chapter_8">第八章 神秘老爷爷</string>
+    <string name="toc_chapter_9">第九章 焚诀</string>
+    <string name="toc_chapter_10">第十章 离开</string>
+
+    <string name="rs_title">阅读设置</string>
+    <string name="rs_reset_default">恢复默认</string>
+    <string name="rs_section_font">字体</string>
+    <string name="rs_section_size">字号</string>
+    <string name="rs_section_bg">背景</string>
+    <string name="rs_section_flip">翻页方式</string>
+    <string name="rs_font_default">系统默认</string>
+    <string name="rs_font_siyuan">思源黑体</string>
+    <string name="rs_font_kaiti">楷体</string>
+    <string name="rs_font_fangsong">方正仿宋</string>
+    <string name="rs_bg_day">白天</string>
+    <string name="rs_bg_night">夜间</string>
+    <string name="rs_bg_eye">护眼</string>
+    <string name="rs_bg_parchment">羊皮纸</string>
+    <string name="rs_flip_sim">仿真</string>
+    <string name="rs_flip_cover">覆盖</string>
+    <string name="rs_flip_slide">滑动</string>
+    <string name="rs_flip_none">无</string>
+    <string name="rs_switch_brightness">亮度跟随系统</string>
+    <string name="rs_switch_volume">音量键翻页</string>
+    <string name="rs_switch_progress">显示阅读进度</string>
+    <string name="rs_preview_text">这是一段预览文字，用于测试字号和背景效果</string>
+
+    <string name="cd_feed_avatar">作者头像</string>
+    <string name="cd_feed_cover">书籍封面</string>
+    <string name="cd_feed_like">点赞</string>
+    <string name="cd_feed_comment">评论</string>
+    <string name="cd_feed_book_icon">书籍图标</string>
+
+    <string name="toc_title_with_name">%s 目录</string>
+
+    <string name="error_invalid_article_id">文章ID错误</string>
+    <string name="error_load_chapters_failed">加载章节失败</string>
+    <string name="error_load_comments_failed">加载评论失败</string>
+    <string name="error_network">网络错误</string>
+    <string name="error_send_failed">发送失败</string>
+    <string name="error_empty_comment">请输入评论内容</string>
+
+    <string name="msg_like_success">点赞成功</string>
+    <string name="msg_reply_feature">回复功能</string>
+    <string name="msg_reply_to">回复 %s</string>
+    <string name="msg_comment_sent">评论已发送</string>
+    <string name="msg_emoji_feature">表情功能</string>
+    <string name="msg_image_feature">图片功能</string>
+    <string name="msg_no_more_data">没有更多了</string>
+
+    <string name="error_load_failed">加载失败</string>
+
+    <string name="msg_history_cleared">历史记录已清空</string>
+
+    <string name="toc_stats_format">共 %d 章 | 最近更新 %s</string>
+    <string name="toc_stats_empty">暂无章节</string>
+
+    <string name="detail_author_format">作者：%s</string>
+    <string name="detail_word_count_format">%d字</string>
+    <string name="detail_reviews_count_format">%d条</string>
+    <string name="detail_reviews_empty">暂无书评，来写第一条吧</string>
+
+    <string name="format_ten_thousand">%d万</string>
+    <string name="format_thousand">%dk</string>
+
+    <string name="author_profile_title">作者主页</string>
+    <string name="author_follow">关注</string>
+    <string name="author_following">已关注</string>
+    <string name="author_works">作品</string>
+    <string name="author_followers">粉丝</string>
+    <string name="author_total_words">总字数</string>
+    <string name="author_tab_dynamic">动态</string>
+    <string name="author_tab_works">作品</string>
+
+    <string name="login_title">登录</string>
+    <string name="login_close">关闭</string>
+    <string name="login_subtitle">登录后同步阅读记录</string>
+    <string name="login_account_hint">请输入QQ号或邮箱</string>
+    <string name="login_code_hint">请输入验证码</string>
+    <string name="login_send_code">获取验证码</string>
+    <string name="login_send_code_retry">%ds后重试</string>
+    <string name="login_btn">登录</string>
+    <string name="login_forgot_password">忘记密码？</string>
+    <string name="login_agree_prefix">登录即代表同意</string>
+    <string name="login_user_agreement">用户协议</string>
+    <string name="login_and">和</string>
+    <string name="login_privacy_policy">隐私政策</string>
+    <string name="login_success">登录成功</string>
+    <string name="login_failed">登录失败，请检查账号和验证码</string>
+    <string name="login_code_sent">验证码已发送</string>
+    <string name="login_invalid_account">请输入有效的QQ号或邮箱</string>
+    <string name="login_invalid_code">请输入6位验证码</string>
+    <string name="login_tab_login">登录</string>
+    <string name="login_tab_register">注册</string>
+    <string name="login_password_hint">请输入密码</string>
+    <string name="login_password_confirm_hint">请再次输入密码</string>
+    <string name="login_new_password_hint">请输入新密码</string>
+    <string name="login_reset_password">重置密码</string>
+    <string name="forgot_password_tip">请输入账号并验证，重置您的密码</string>
+</resources>

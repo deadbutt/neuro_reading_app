@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_card"
+    android:padding="@dimen/feed_card_padding">
+
+    <!-- ==================== 顶部行：作者头像 + 昵称 + 发布时间 ==================== -->
+
+    <!-- 作者头像 40dp 圆形 -->
+    <ImageView
+        android:id="@+id/iv_author_avatar"
+        android:layout_width="@dimen/feed_avatar_size"
+        android:layout_height="@dimen/feed_avatar_size"
+        android:background="@drawable/bg_avatar_placeholder"
+        android:contentDescription="@string/cd_feed_avatar"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 作者昵称 加粗 -->
+    <TextView
+        android:id="@+id/tv_author_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/feed_name_text_size"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/tv_publish_time"
+        app:layout_constraintEnd_toStartOf="@id/tv_publish_time"
+        app:layout_constraintStart_toEndOf="@id/iv_author_avatar"
+        app:layout_constraintTop_toTopOf="@id/iv_author_avatar"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="天蚕土豆" />
+
+    <!-- 发布时间 灰色小字 右对齐 -->
+    <TextView
+        android:id="@+id/tv_publish_time"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/text_hint"
+        android:textSize="@dimen/feed_time_text_size"
+        app:layout_constraintBottom_toBottomOf="@id/iv_author_avatar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/iv_author_avatar"
+        app:layout_constraintTop_toBottomOf="@id/tv_author_name"
+        tools:text="3小时前" />
+
+    <!-- ==================== 中间动态内容：书籍图标 + 动态文本 ==================== -->
+
+    <!-- 书籍图标 16dp -->
+    <ImageView
+        android:id="@+id/iv_book_icon"
+        android:layout_width="@dimen/feed_book_icon_size"
+        android:layout_height="@dimen/feed_book_icon_size"
+        android:layout_marginTop="@dimen/feed_section_gap"
+        android:contentDescription="@string/cd_feed_book_icon"
+        android:src="@drawable/ic_book_small"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_author_avatar" />
+
+    <!-- 动态内容文本 -->
+    <TextView
+        android:id="@+id/tv_activity_content"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:textColor="@color/text_primary"
+        android:textSize="@dimen/feed_content_text_size"
+        app:layout_constraintBottom_toBottomOf="@id/iv_book_icon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/iv_book_icon"
+        app:layout_constraintTop_toTopOf="@id/iv_book_icon"
+        tools:text="发布了新章节：《斗破苍穹》第1020章 天人感应" />
+
+    <!-- ==================== 书籍信息行：封面 + 试读文本 + 阅读热度 ==================== -->
+
+    <!-- 书籍封面 60×80dp 圆角 -->
+    <ImageView
+        android:id="@+id/iv_book_cover"
+        android:layout_width="@dimen/feed_cover_width"
+        android:layout_height="@dimen/feed_cover_height"
+        android:layout_marginTop="@dimen/feed_section_gap"
+        android:background="@drawable/bg_feed_cover"
+        android:contentDescription="@string/cd_feed_cover"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_book_icon" />
+
+    <!-- 章节试读文本 最多两行 灰色 -->
+    <TextView
+        android:id="@+id/tv_chapter_preview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/item_spacing"
+        android:ellipsize="end"
+        android:lineSpacingExtra="3dp"
+        android:maxLines="2"
+        android:textColor="@color/text_secondary"
+        android:textSize="@dimen/feed_preview_text_size"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/iv_book_cover"
+        app:layout_constraintTop_toTopOf="@id/iv_book_cover"
+        tools:text="望着测验魔石碑上面闪亮得甚至有些刺眼的五个大字，少年面无表情…" />
+
+    <!-- 阅读热度 小字 -->
+    <TextView
+        android:id="@+id/tv_read_heat"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/item_spacing"
+        android:textColor="@color/text_hint"
+        android:textSize="@dimen/feed_heat_text_size"
+        app:layout_constraintBottom_toBottomOf="@id/iv_book_cover"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/iv_book_cover"
+        tools:text="🔥 234人读过" />
+
+    <!-- ==================== 分割线 ==================== -->
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/divider_height"
+        android:layout_marginTop="@dimen/feed_section_gap"
+        android:background="@color/divider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/iv_book_cover" />
+
+    <!-- ==================== 底部操作栏：点赞 + 评论 ==================== -->
+
+    <!-- 点赞图标 -->
+    <ImageView
+        android:id="@+id/iv_like"
+        android:layout_width="@dimen/feed_action_icon_size"
+        android:layout_height="@dimen/feed_action_icon_size"
+        android:layout_marginTop="10dp"
+        android:contentDescription="@string/cd_feed_like"
+        android:src="@drawable/ic_heart_border"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider" />
+
+    <!-- 点赞数 -->
+    <TextView
+        android:id="@+id/tv_like_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:textColor="@color/like_text"
+        android:textSize="@dimen/feed_action_text_size"
+        app:layout_constraintBottom_toBottomOf="@id/iv_like"
+        app:layout_constraintStart_toEndOf="@id/iv_like"
+        app:layout_constraintTop_toTopOf="@id/iv_like"
+        tools:text="128" />
+
+    <!-- 评论图标 -->
+    <ImageView
+        android:id="@+id/iv_comment"
+        android:layout_width="@dimen/feed_action_icon_size"
+        android:layout_height="@dimen/feed_action_icon_size"
+        android:layout_marginTop="10dp"
+        android:contentDescription="@string/cd_feed_comment"
+        android:src="@drawable/ic_comment"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/divider" />
+
+    <!-- 评论数 -->
+    <TextView
+        android:id="@+id/tv_comment_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:textColor="@color/like_text"
+        android:textSize="@dimen/feed_action_text_size"
+        app:layout_constraintBottom_toBottomOf="@id/iv_comment"
+        app:layout_constraintEnd_toStartOf="@id/iv_comment"
+        app:layout_constraintTop_toTopOf="@id/iv_comment"
+        tools:text="32" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".NeuroApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TomatoRead"
+        android:usesCleartextTraffic="true"
+        android:enableOnBackInvokedCallback="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".BookDetailActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".CommentsActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".ProfileActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".ReaderActivity" android:theme="@style/Theme.TomatoRead"
+            android:configChanges="orientation|screenSize" />
+        <activity android:name=".BookshelfActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".SearchActivity" android:theme="@style/Theme.TomatoRead"
+            android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".TocActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".ReaderSettingsActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".ArticleDetailActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".AuthorProfileActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".LoginActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".ForgotPasswordActivity" android:theme="@style/Theme.TomatoRead" />
+    </application>
+
+</manifest>

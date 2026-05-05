@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    android:gravity="top"
+    android:paddingStart="@dimen/reader_content_padding"
+    android:paddingEnd="@dimen/reader_content_padding">
+
+    <TextView
+        android:id="@+id/tv_paragraph_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lineSpacingExtra="@dimen/reader_line_spacing"
+        android:textColor="@color/reader_text"
+        android:textSize="@dimen/reader_text_size" />
+
+</LinearLayout>
