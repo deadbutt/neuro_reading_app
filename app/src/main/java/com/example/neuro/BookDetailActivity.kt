@@ -76,9 +76,11 @@ class BookDetailActivity : AppCompatActivity() {
 
     private fun displayArticleDetail(article: ArticleMeta) {
         findViewById<TextView>(R.id.tv_detail_book_title).text = article.title
-        findViewById<TextView>(R.id.tv_detail_author).text = getString(R.string.detail_author_format, article.author)
+        val authorText = if (article.author.isNotBlank()) article.author else "未知作者"
+        findViewById<TextView>(R.id.tv_detail_author).text = getString(R.string.detail_author_format, authorText)
         findViewById<TextView>(R.id.tv_detail_synopsis).text = article.summary
         findViewById<TextView>(R.id.tv_detail_word_count).text = getString(R.string.detail_word_count_format, article.wordCount)
+        android.util.Log.d("BookDetail", "article: id=${article.articleId}, title=${article.title}, author=${article.author}")
 
         // 加载封面（如果有）
         val ivCover = findViewById<ImageView>(R.id.iv_detail_cover)

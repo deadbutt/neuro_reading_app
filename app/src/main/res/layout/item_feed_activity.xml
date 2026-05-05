@@ -113,19 +113,6 @@
         app:layout_constraintTop_toTopOf="@id/iv_book_cover"
         tools:text="望着测验魔石碑上面闪亮得甚至有些刺眼的五个大字，少年面无表情…" />
 
-    <!-- 阅读热度 小字 -->
-    <TextView
-        android:id="@+id/tv_read_heat"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/item_spacing"
-        android:textColor="@color/text_hint"
-        android:textSize="@dimen/feed_heat_text_size"
-        app:layout_constraintBottom_toBottomOf="@id/iv_book_cover"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/iv_book_cover"
-        tools:text="🔥 234人读过" />
-
     <!-- ==================== 分割线 ==================== -->
 
     <View

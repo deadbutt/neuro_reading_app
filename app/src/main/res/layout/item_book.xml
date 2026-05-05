@@ -48,36 +48,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:gravity="center_vertical"
+            android:gravity="center_vertical|end"
             android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:layout_width="@dimen/hot_dot_size"
-                    android:layout_height="@dimen/hot_dot_size"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/bg_hot_dot" />
-
-                <ImageView
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_marginStart="4dp"
-                    android:contentDescription="@string/app_name"
-                    android:src="@drawable/ic_hot" />
-
-                <TextView
-                    android:id="@+id/tv_book_hot"
-                    style="@style/BookHotStyle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="2dp" />
-            </LinearLayout>
 
             <ImageView
                 android:id="@+id/iv_add_shelf"

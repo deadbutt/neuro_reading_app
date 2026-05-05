@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidx.cardview)
     implementation(libs.glide)
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)

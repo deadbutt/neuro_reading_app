@@ -2,8 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/app_background"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/app_background">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -14,43 +14,39 @@
         <ImageView
             android:id="@+id/iv_back"
             android:layout_width="@dimen/top_bar_icon_size"
-            android:layout_height="@dimen/top_bar_icon_size"
-            android:layout_centerVertical="true"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="返回"
-            android:padding="10dp"
-            android:src="@drawable/ic_back_arrow" />
+            android:padding="12dp"
+            android:src="@drawable/ic_back_arrow"
+            android:contentDescription="返回" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="新建作品"
+            android:text="编辑作品信息"
             android:textColor="@color/text_primary"
-            android:textSize="18sp"
+            android:textSize="@dimen/text_large"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/tv_create"
+            android:id="@+id/tv_save"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="16dp"
-            android:background="@drawable/bg_btn_primary"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center"
             android:paddingStart="16dp"
-            android:paddingTop="6dp"
             android:paddingEnd="16dp"
-            android:paddingBottom="6dp"
-            android:text="创建"
-            android:textColor="@color/white"
+            android:text="保存"
+            android:textColor="@color/primary_red"
             android:textSize="14sp" />
     </RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -62,8 +58,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="作品标题"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
 
             <EditText
                 android:id="@+id/et_title"
@@ -85,8 +81,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
                 android:text="作品简介"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
 
             <EditText
                 android:id="@+id/et_summary"
@@ -95,7 +91,7 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
                 android:gravity="top"
-                android:hint="请输入作品简介（选填）"
+                android:hint="请输入作品简介"
                 android:inputType="textMultiLine"
                 android:padding="12dp"
                 android:textColor="@color/text_primary"
@@ -106,9 +102,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="标签"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                android:text="标签（用逗号分隔）"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
 
             <EditText
                 android:id="@+id/et_tags"
@@ -116,7 +112,7 @@
                 android:layout_height="@dimen/input_height"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
-                android:hint="多个标签用逗号分隔（选填）"
+                android:hint="例如：小说, 科幻, 冒险"
                 android:inputType="text"
                 android:maxLines="1"
                 android:paddingStart="12dp"
@@ -129,16 +125,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="封面图片（选填）"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
+                android:text="封面图片"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
 
             <FrameLayout
                 android:id="@+id/fl_cover"
                 android:layout_width="100dp"
                 android:layout_height="133dp"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/bg_book_cover_placeholder"
+                android:background="@drawable/bg_upload_area"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -149,22 +145,12 @@
                     android:scaleType="centerCrop"
                     android:visibility="gone" />
 
-                <TextView
-                    android:id="@+id/tv_cover_placeholder"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:textColor="@color/white"
-                    android:textSize="40sp"
-                    android:textStyle="bold" />
-
                 <LinearLayout
                     android:id="@+id/ll_upload_hint"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                    android:orientation="vertical">
 
                     <ImageView
                         android:layout_width="32dp"
@@ -177,19 +163,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="点击上传"
+                        android:text="上传封面"
                         android:textColor="@color/text_hint"
                         android:textSize="12sp" />
                 </LinearLayout>
             </FrameLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="点击封面区域可上传图片"
-                android:textColor="@color/text_hint"
-                android:textSize="12sp" />
 
         </LinearLayout>
     </ScrollView>

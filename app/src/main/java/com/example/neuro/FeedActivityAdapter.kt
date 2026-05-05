@@ -14,7 +14,6 @@ data class FeedActivityItem(
     val activityContent: String,
     val bookCoverResId: Int = 0,
     val chapterPreview: String,
-    val readHeat: String,
     val likeCount: String,
     val commentCount: String,
     var isLiked: Boolean = false
@@ -35,7 +34,6 @@ class FeedActivityAdapter(
         val tvActivityContent: TextView = view.findViewById(R.id.tv_activity_content)
         val ivBookCover: ImageView = view.findViewById(R.id.iv_book_cover)
         val tvChapterPreview: TextView = view.findViewById(R.id.tv_chapter_preview)
-        val tvReadHeat: TextView = view.findViewById(R.id.tv_read_heat)
         val ivLike: ImageView = view.findViewById(R.id.iv_like)
         val tvLikeCount: TextView = view.findViewById(R.id.tv_like_count)
         val ivComment: ImageView = view.findViewById(R.id.iv_comment)
@@ -54,7 +52,6 @@ class FeedActivityAdapter(
         holder.tvPublishTime.text = item.publishTime
         holder.tvActivityContent.text = item.activityContent
         holder.tvChapterPreview.text = item.chapterPreview
-        holder.tvReadHeat.text = item.readHeat
         holder.tvLikeCount.text = item.likeCount
         holder.tvCommentCount.text = item.commentCount
 

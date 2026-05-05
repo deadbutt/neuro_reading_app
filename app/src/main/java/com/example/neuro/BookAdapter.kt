@@ -12,7 +12,6 @@ data class BookItem(
     val title: String,
     val author: String,
     val desc: String,
-    val hotText: String,
     val coverResId: Int = 0,
     val coverUrl: String = ""
 )
@@ -27,7 +26,6 @@ class BookAdapter(
         val tvTitle: TextView = view.findViewById(R.id.tv_book_title)
         val tvAuthor: TextView = view.findViewById(R.id.tv_book_author)
         val tvDesc: TextView = view.findViewById(R.id.tv_book_desc)
-        val tvHot: TextView = view.findViewById(R.id.tv_book_hot)
         val ivAddShelf: ImageView = view.findViewById(R.id.iv_add_shelf)
     }
 
@@ -41,7 +39,6 @@ class BookAdapter(
         holder.tvTitle.text = book.title
         holder.tvAuthor.text = book.author
         holder.tvDesc.text = book.desc
-        holder.tvHot.text = book.hotText
         if (book.coverResId != 0) {
             holder.ivCover.setImageResource(book.coverResId)
         } else if (book.coverUrl.isNotEmpty()) {

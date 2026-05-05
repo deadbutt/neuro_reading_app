@@ -52,6 +52,9 @@
             android:windowSoftInputMode="adjustResize" />
         <activity android:name=".EditorActivity" android:theme="@style/Theme.TomatoRead"
             android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".WorkManageActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".EditWorkInfoActivity" android:theme="@style/Theme.TomatoRead"
+            android:windowSoftInputMode="adjustResize" />
 
         <!-- 上传作品Activity -->
         <activity

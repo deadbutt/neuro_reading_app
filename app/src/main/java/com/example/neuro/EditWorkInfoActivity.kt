@@ -5,9 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.View
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -19,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.neuro.api.RetrofitClient
-import com.example.neuro.api.model.CreateWorkRequest
+import com.example.neuro.api.model.UpdateWorkRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,17 +26,17 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
 
-class CreateWorkActivity : AppCompatActivity() {
+class EditWorkInfoActivity : AppCompatActivity() {
 
     private lateinit var etTitle: EditText
     private lateinit var etSummary: EditText
     private lateinit var etTags: EditText
-    private lateinit var tvCreate: TextView
     private lateinit var flCover: FrameLayout
     private lateinit var ivCover: ImageView
     private lateinit var llUploadHint: LinearLayout
-    private lateinit var tvCoverPlaceholder: TextView
+    private lateinit var tvSave: TextView
 
+    private var articleId: String? = null
     private var coverUrl: String? = null
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -51,29 +48,34 @@ class CreateWorkActivity : AppCompatActivity() {
     }
 
     companion object {
-        fun start(context: Context) {
-            context.startActivity(Intent(context, CreateWorkActivity::class.java))
+        private const val EXTRA_ARTICLE_ID = "article_id"
+
+        fun start(context: Context, articleId: String) {
+            context.startActivity(Intent(context, EditWorkInfoActivity::class.java).apply {
+                putExtra(EXTRA_ARTICLE_ID, articleId)
+            })
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_create_work)
+        setContentView(R.layout.activity_edit_work_info)
+
+        articleId = intent.getStringExtra(EXTRA_ARTICLE_ID)
 
         initViews()
         setupClickListeners()
-        setupTitleWatcher()
+        loadWorkInfo()
     }
 
     private fun initViews() {
         etTitle = findViewById(R.id.et_title)
         etSummary = findViewById(R.id.et_summary)
         etTags = findViewById(R.id.et_tags)
-        tvCreate = findViewById(R.id.tv_create)
         flCover = findViewById(R.id.fl_cover)
         ivCover = findViewById(R.id.iv_cover)
         llUploadHint = findViewById(R.id.ll_upload_hint)
-        tvCoverPlaceholder = findViewById(R.id.tv_cover_placeholder)
+        tvSave = findViewById(R.id.tv_save)
     }
 
     private fun setupClickListeners() {
@@ -81,8 +83,8 @@ class CreateWorkActivity : AppCompatActivity() {
             finish()
         }
 
-        tvCreate.setOnClickListener {
-            createWork()
+        tvSave.setOnClickListener {
+            saveWorkInfo()
         }
 
         flCover.setOnClickListener {
@@ -90,23 +92,36 @@ class CreateWorkActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupTitleWatcher() {
-        etTitle.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                updateCoverPlaceholder(s?.toString()?.trim() ?: "")
+    private fun loadWorkInfo() {
+        if (articleId.isNullOrBlank()) return
+
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getWorkDetail(articleId!!)
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    val data = response.body()?.data ?: return@launch
+                    etTitle.setText(data.title)
+                    etSummary.setText(data.summary)
+                    etTags.setText(data.tags.joinToString(", "))
+                    coverUrl = data.cover
+                    updateCoverDisplay()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@EditWorkInfoActivity, "加载失败", Toast.LENGTH_SHORT).show()
             }
-        })
+        }
     }
 
-    private fun updateCoverPlaceholder(title: String) {
-        if (coverUrl.isNullOrBlank()) {
-            ivCover.visibility = View.GONE
-            llUploadHint.visibility = View.GONE
-            tvCoverPlaceholder.visibility = View.VISIBLE
-            val firstChar = title.firstOrNull()?.toString() ?: "+"
-            tvCoverPlaceholder.text = firstChar
+    private fun updateCoverDisplay() {
+        if (!coverUrl.isNullOrBlank()) {
+            llUploadHint.visibility = android.view.View.GONE
+            ivCover.visibility = android.view.View.VISIBLE
+            Glide.with(this)
+                .load(coverUrl)
+                .into(ivCover)
+        } else {
+            ivCover.visibility = android.view.View.GONE
+            llUploadHint.visibility = android.view.View.VISIBLE
         }
     }
 
@@ -121,7 +136,7 @@ class CreateWorkActivity : AppCompatActivity() {
             try {
                 val file = getFileFromUri(uri)
                 if (file == null) {
-                    Toast.makeText(this@CreateWorkActivity, "无法读取文件", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EditWorkInfoActivity, "无法读取文件", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
 
@@ -132,12 +147,12 @@ class CreateWorkActivity : AppCompatActivity() {
                 if (response.isSuccessful && response.body()?.code == 0) {
                     coverUrl = response.body()?.data?.url
                     updateCoverDisplay()
-                    Toast.makeText(this@CreateWorkActivity, "封面上传成功", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EditWorkInfoActivity, "封面上传成功", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this@CreateWorkActivity, "上传失败", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EditWorkInfoActivity, "上传失败", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@CreateWorkActivity, "上传出错: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@EditWorkInfoActivity, "上传出错: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -156,24 +171,15 @@ class CreateWorkActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateCoverDisplay() {
-        if (!coverUrl.isNullOrBlank()) {
-            llUploadHint.visibility = View.GONE
-            tvCoverPlaceholder.visibility = View.GONE
-            ivCover.visibility = View.VISIBLE
-            Glide.with(this)
-                .load(coverUrl)
-                .into(ivCover)
-        } else {
-            ivCover.visibility = View.GONE
-            updateCoverPlaceholder(etTitle.text.toString().trim())
-        }
-    }
-
-    private fun createWork() {
+    private fun saveWorkInfo() {
         val title = etTitle.text.toString().trim()
         if (title.isBlank()) {
             Toast.makeText(this, "请输入作品标题", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (articleId.isNullOrBlank()) {
+            Toast.makeText(this, "作品ID无效", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -181,39 +187,34 @@ class CreateWorkActivity : AppCompatActivity() {
         val tagsText = etTags.text.toString().trim()
         val tags = if (tagsText.isNotBlank()) tagsText.split(",").map { it.trim() } else null
 
-        tvCreate.isEnabled = false
-        tvCreate.text = "创建中..."
+        tvSave.isEnabled = false
 
         lifecycleScope.launch {
             try {
-                val request = CreateWorkRequest(
+                val request = UpdateWorkRequest(
                     title = title,
                     summary = summary,
                     tags = tags,
                     cover = coverUrl
                 )
 
-                val response = RetrofitClient.apiService.createWork(request)
+                val response = RetrofitClient.apiService.updateWork(articleId!!, request)
 
                 withContext(Dispatchers.Main) {
                     if (response.isSuccessful && response.body()?.code == 0) {
-                        val articleId = response.body()?.data?.articleId
-                        Toast.makeText(this@CreateWorkActivity, "作品创建成功", Toast.LENGTH_SHORT).show()
-                        EditorActivity.start(this@CreateWorkActivity, articleId, title)
+                        Toast.makeText(this@EditWorkInfoActivity, "保存成功", Toast.LENGTH_SHORT).show()
                         setResult(RESULT_OK)
                         finish()
                     } else {
-                        val msg = response.body()?.message ?: "创建失败"
-                        Toast.makeText(this@CreateWorkActivity, msg, Toast.LENGTH_SHORT).show()
-                        tvCreate.isEnabled = true
-                        tvCreate.text = "创建"
+                        val msg = response.body()?.message ?: "保存失败"
+                        Toast.makeText(this@EditWorkInfoActivity, msg, Toast.LENGTH_SHORT).show()
                     }
+                    tvSave.isEnabled = true
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CreateWorkActivity, "创建出错：${e.message}", Toast.LENGTH_SHORT).show()
-                    tvCreate.isEnabled = true
-                    tvCreate.text = "创建"
+                    Toast.makeText(this@EditWorkInfoActivity, "保存出错：${e.message}", Toast.LENGTH_SHORT).show()
+                    tvSave.isEnabled = true
                 }
             }
         }

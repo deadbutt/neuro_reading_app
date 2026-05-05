@@ -228,4 +228,10 @@ interface ApiService {
         @Part file: MultipartBody.Part,
         @Part("title") title: okhttp3.RequestBody?
     ): Response<BaseResponse<UploadDocxResponse>>
+
+    @Multipart
+    @POST("api/v1/creator/works/upload/cover")
+    suspend fun uploadCover(
+        @Part file: MultipartBody.Part
+    ): Response<BaseResponse<UploadCoverResponse>>
 }

@@ -33,8 +33,8 @@ class CreateCenterActivity : AppCompatActivity() {
         rvWorks = findViewById(R.id.rv_works)
         llEmpty = findViewById(R.id.ll_empty)
 
-        worksAdapter = WorksAdapter(works) { work, _ ->
-            EditorActivity.start(this, work.articleId, work.title)
+        worksAdapter = WorksAdapter(works, this) {
+            updateEmptyState()
         }
         rvWorks.layoutManager = LinearLayoutManager(this)
         rvWorks.adapter = worksAdapter
@@ -73,11 +73,18 @@ class CreateCenterActivity : AppCompatActivity() {
                         )
                     })
                     worksAdapter.notifyDataSetChanged()
-                    llEmpty.visibility = if (works.isEmpty()) View.VISIBLE else View.GONE
+                    updateEmptyState()
+                } else {
+                    android.util.Log.e("CreateCenter", "加载失败: ${response.body()?.message}")
                 }
             } catch (e: Exception) {
+                android.util.Log.e("CreateCenter", "加载异常: ${e.message}")
             }
         }
+    }
+
+    private fun updateEmptyState() {
+        llEmpty.visibility = if (works.isEmpty()) View.VISIBLE else View.GONE
     }
 
     override fun onResume() {

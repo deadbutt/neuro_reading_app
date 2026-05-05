@@ -140,21 +140,6 @@
                     android:textColor="@color/text_secondary"
                     android:textSize="@dimen/detail_info_text_size" />
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="12dp"
-                    android:layout_marginStart="12dp"
-                    android:background="@color/divider" />
-
-                <TextView
-                    android:id="@+id/tv_detail_readers"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:text="@string/detail_readers"
-                    android:textColor="@color/hot_red"
-                    android:textSize="@dimen/detail_info_text_size" />
-
                 <ImageView
                     android:layout_width="16dp"
                     android:layout_height="16dp"

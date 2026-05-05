@@ -82,8 +82,7 @@ class SearchFragment : Fragment() {
                                 bookId = article.articleId,
                                 title = article.title,
                                 author = article.author,
-                                desc = article.summary,
-                                hotText = "${article.wordCount}字 · ${article.chapterCount}章"
+                                desc = article.summary
                             )
                         })
                         showSearchResults(view)

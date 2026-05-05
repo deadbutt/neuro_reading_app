@@ -9,9 +9,14 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.neuro.api.RetrofitClient
+import com.example.neuro.api.model.CommentResponse
+import com.example.neuro.api.model.PostCommentRequest
+import kotlinx.coroutines.launch
 
 class CommentsActivity : AppCompatActivity() {
 
@@ -30,10 +35,12 @@ class CommentsActivity : AppCompatActivity() {
     private lateinit var tvSortNew: TextView
     private lateinit var tvSortAuthor: TextView
     private lateinit var vIndicatorHot: View
-    private var currentSort: Int = 0
+    private var currentSort: String = "hot"
+    private var currentPage: Int = 1
 
     private val comments = mutableListOf<CommentItem>()
     private lateinit var adapter: CommentAdapter
+    private lateinit var srl: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +59,57 @@ class CommentsActivity : AppCompatActivity() {
         setupRecyclerView()
         setupSwipeRefresh()
         setupSendButton()
+        loadComments()
+    }
+
+    private fun loadComments() {
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getArticleComments(
+                    articleId = articleId,
+                    page = currentPage,
+                    sort = currentSort
+                )
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    val data = response.body()?.data
+                    data?.let { page ->
+                        val newComments = page.list.map { it.toCommentItem() }
+                        if (currentPage == 1) {
+                            comments.clear()
+                        }
+                        comments.addAll(newComments)
+                        adapter.notifyDataSetChanged()
+                    }
+                } else {
+                    Toast.makeText(this@CommentsActivity, "加载评论失败", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@CommentsActivity, "网络错误", Toast.LENGTH_SHORT).show()
+            } finally {
+                srl.isRefreshing = false
+            }
+        }
+    }
+
+    private fun CommentResponse.toCommentItem(): CommentItem {
+        return CommentItem(
+            name = this.userName,
+            avatarUrl = this.userAvatar.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP),
+            time = this.createTime,
+            content = this.content,
+            likes = formatCount(this.likeCount),
+            isAuthor = false
+        )
+    }
+
+    private fun formatCount(count: Int): String {
+        return when {
+            count >= Constants.CountFormat.TEN_THOUSAND ->
+                getString(R.string.format_ten_thousand, count / Constants.CountFormat.TEN_THOUSAND)
+            count >= Constants.CountFormat.THOUSAND ->
+                getString(R.string.format_thousand, count / Constants.CountFormat.THOUSAND)
+            else -> count.toString()
+        }
     }
 
     private fun setupSortTabs() {
@@ -62,7 +120,13 @@ class CommentsActivity : AppCompatActivity() {
     }
 
     private fun selectSort(index: Int) {
-        currentSort = index
+        currentSort = when (index) {
+            0 -> "hot"
+            1 -> "new"
+            2 -> "author"
+            else -> "hot"
+        }
+        currentPage = 1
         val tabs = listOf(tvSortHot, tvSortNew, tvSortAuthor)
         for ((i, tv) in tabs.withIndex()) {
             if (i == index) {
@@ -73,6 +137,7 @@ class CommentsActivity : AppCompatActivity() {
                 tv.setTypeface(null, Typeface.NORMAL)
             }
         }
+        loadComments()
     }
 
     private fun setupRecyclerView() {
@@ -90,9 +155,10 @@ class CommentsActivity : AppCompatActivity() {
     }
 
     private fun setupSwipeRefresh() {
-        val srl = findViewById<SwipeRefreshLayout>(R.id.srl_comments)
+        srl = findViewById(R.id.srl_comments)
         srl.setOnRefreshListener {
-            srl.postDelayed({ srl.isRefreshing = false }, 1500L)
+            currentPage = 1
+            loadComments()
         }
     }
 
@@ -101,8 +167,28 @@ class CommentsActivity : AppCompatActivity() {
             val input = findViewById<EditText>(R.id.et_comment_input)
             val text = input.text.toString().trim()
             if (text.isNotEmpty()) {
-                Toast.makeText(this, R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()
-                input.text.clear()
+                postComment(text, input)
+            }
+        }
+    }
+
+    private fun postComment(content: String, input: EditText) {
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.apiService.postComment(
+                    articleId = articleId,
+                    request = PostCommentRequest(content = content)
+                )
+                if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
+                    Toast.makeText(this@CommentsActivity, R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()
+                    input.text.clear()
+                    currentPage = 1
+                    loadComments()
+                } else {
+                    Toast.makeText(this@CommentsActivity, R.string.error_send_failed, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@CommentsActivity, R.string.error_network, Toast.LENGTH_SHORT).show()
             }
         }
     }

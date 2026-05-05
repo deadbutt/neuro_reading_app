@@ -9,6 +9,7 @@ data class CreateWorkRequest(
 
 data class CreateWorkResponse(
     val articleId: String,
+    val creatorId: String,
     val title: String,
     val status: String
 )
@@ -26,7 +27,7 @@ data class WorkDetailResponse(
     val title: String,
     val summary: String,
     val tags: List<String>,
-    val cover: String,
+    val cover: String?,
     val status: String,
     val chapters: List<ChapterInfo>,
     val wordCount: Int,
@@ -43,6 +44,7 @@ data class ChapterInfo(
 
 data class PublishWorkResponse(
     val articleId: String,
+    val creatorId: String,
     val status: String
 )
 
@@ -84,8 +86,8 @@ data class WorkListItem(
     val creatorId: String,
     val title: String,
     val summary: String,
-    val cover: String,
-    val status: String,
+    val cover: String?,
+    val status: String?,
     val chapterCount: Int,
     val wordCount: Int,
     val lastUpdateTime: String
@@ -96,4 +98,8 @@ data class UploadDocxResponse(
     val title: String,
     val chapterCount: Int,
     val wordCount: Int
+)
+
+data class UploadCoverResponse(
+    val url: String
 )
