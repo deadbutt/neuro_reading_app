@@ -195,6 +195,55 @@
                 android:layout_height="8dp"
                 android:background="@color/app_background" />
 
+            <!-- 成为创作者 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/white"
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:id="@+id/ll_menu_creator"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/profile_menu_item_height"
+                    android:background="?attr/selectableItemBackground"
+                    android:paddingStart="@dimen/padding_horizontal"
+                    android:paddingEnd="@dimen/padding_horizontal">
+
+                    <ImageView
+                        android:id="@+id/iv_icon_creator"
+                        android:layout_width="@dimen/profile_menu_icon_size"
+                        android:layout_height="@dimen/profile_menu_icon_size"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="成为创作者"
+                        android:src="@drawable/ic_create_new"
+                        app:tint="@color/primary_red" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/iv_icon_creator"
+                        android:text="成为创作者"
+                        android:textColor="@color/text_primary"
+                        android:textSize="@dimen/profile_menu_text_size" />
+
+                    <ImageView
+                        android:layout_width="@dimen/profile_arrow_size"
+                        android:layout_height="@dimen/profile_arrow_size"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="成为创作者"
+                        android:src="@drawable/ic_arrow_right" />
+                </RelativeLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:background="@color/app_background" />
+
             <!-- 菜单列表 -->
             <LinearLayout
                 android:layout_width="match_parent"

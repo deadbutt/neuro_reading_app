@@ -150,4 +150,54 @@ interface ApiService {
     suspend fun uploadAvatar(
         @Part file: MultipartBody.Part
     ): Response<BaseResponse<UploadAvatarResponse>>
+
+    // ==================== 作品上传 ====================
+
+    @Multipart
+    @POST("api/v1/upload/work")
+    suspend fun uploadWork(
+        @Part file: MultipartBody.Part,
+        @Part("title") title: okhttp3.RequestBody,
+        @Part("summary") summary: okhttp3.RequestBody,
+        @Part("tags") tags: okhttp3.RequestBody
+    ): Response<BaseResponse<UploadWorkResponse>>
+
+    // ==================== 创作中心 ====================
+
+    @GET("api/v1/works/my")
+    suspend fun getMyWorks(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("status") status: String = "all"
+    ): Response<BaseResponse<MyWorksResponse>>
+
+    @POST("api/v1/works")
+    suspend fun createWork(
+        @Body request: CreateWorkRequest
+    ): Response<BaseResponse<CreateWorkResponse>>
+
+    @POST("api/v1/works/{workId}/chapters")
+    suspend fun createChapter(
+        @Path("workId") workId: String,
+        @Body request: CreateChapterRequest
+    ): Response<BaseResponse<ChapterResponse>>
+
+    @PUT("api/v1/works/{workId}/chapters/{chapterId}")
+    suspend fun updateChapter(
+        @Path("workId") workId: String,
+        @Path("chapterId") chapterId: String,
+        @Body request: UpdateChapterRequest
+    ): Response<BaseResponse<ChapterResponse>>
+
+    @GET("api/v1/works/{workId}/chapters/{chapterId}")
+    suspend fun getChapterForEdit(
+        @Path("workId") workId: String,
+        @Path("chapterId") chapterId: String
+    ): Response<BaseResponse<ChapterDetailResponse>>
+
+    @Multipart
+    @POST("api/v1/upload/cover")
+    suspend fun uploadCover(
+        @Part file: MultipartBody.Part
+    ): Response<BaseResponse<UploadAvatarResponse>>
 }

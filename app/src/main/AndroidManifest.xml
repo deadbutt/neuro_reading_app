@@ -4,6 +4,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_DOCUMENTS" />
 
     <application
         android:name=".NeuroApplication"
@@ -42,6 +45,67 @@
         <activity android:name=".AuthorProfileActivity" android:theme="@style/Theme.TomatoRead" />
         <activity android:name=".LoginActivity" android:theme="@style/Theme.TomatoRead" />
         <activity android:name=".ForgotPasswordActivity" android:theme="@style/Theme.TomatoRead" />
+
+        <!-- 创作中心 -->
+        <activity android:name=".CreateCenterActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".EditorActivity" android:theme="@style/Theme.TomatoRead"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 上传作品Activity -->
+        <activity
+            android:name=".UploadActivity"
+            android:exported="true"
+            android:theme="@style/Theme.TomatoRead"
+            android:windowSoftInputMode="adjustResize">
+
+            <!-- 支持从文件管理器打开txt文件 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/plain" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+            </intent-filter>
+
+            <!-- 支持从文件管理器打开多种文档格式 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/epub+zip" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-fictionbook" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-mobipocket-ebook" />
+            </intent-filter>
+
+            <!-- 支持分享文件到应用 -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/epub+zip" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

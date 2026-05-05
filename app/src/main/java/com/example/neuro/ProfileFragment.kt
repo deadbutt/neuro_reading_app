@@ -86,6 +86,9 @@ class ProfileFragment : Fragment() {
             showLogoutConfirmDialog()
         }
 
+        view.findViewById<View>(R.id.ll_menu_creator).setOnClickListener {
+            startActivity(Intent(requireContext(), CreateCenterActivity::class.java))
+        }
         view.findViewById<View>(R.id.ll_menu_history).setOnClickListener {
             if (checkLogin()) Toast.makeText(requireContext(), "阅读历史", Toast.LENGTH_SHORT).show()
         }
