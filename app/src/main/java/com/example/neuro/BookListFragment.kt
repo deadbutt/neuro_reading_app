@@ -131,7 +131,8 @@ class BookListFragment : Fragment() {
                                 bookId = article.articleId,
                                 title = article.title,
                                 author = article.author,
-                                desc = article.summary
+                                desc = article.summary,
+                                coverUrl = article.cover?.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP) ?: ""
                             )
                         }
 

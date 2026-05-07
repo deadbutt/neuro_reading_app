@@ -4,25 +4,29 @@ package com.example.neuro.api.model
 data class ArticleIndex(
     val articleId: String,
     val title: String,
-    val author: String,       // 作者名（字符串）
-    val summary: String,      // 文章简介/摘要
-    val wordCount: Int,       // 总字数
-    val chapterCount: Int,    // 总章节数
-    val tags: List<String>,   // 标签列表
+    val author: String,        // 作者名（字符串）
+    val summary: String,       // 文章简介/摘要
+    val cover: String?,        // 封面图片URL
+    val wordCount: Int,        // 总字数
+    val chapterCount: Int,     // 总章节数
+    val tags: List<String>?,   // 标签列表（可空）
+    val status: String?,       // 状态（可空）
     val lastUpdateTime: String
 )
 
 // 文章详情响应 (原 BookDetailResponse)
 data class ArticleMeta(
     val articleId: String,
+    val creatorId: String?,    // 创作者ID
     val title: String,
-    val author: String,       // 作者名（字符串）
-    val summary: String,      // 摘要
-    val tags: List<String>,
+    val author: String,        // 作者名（字符串）
+    val summary: String,       // 摘要
+    val cover: String?,        // 封面图片URL
+    val tags: List<String>?,   // 标签列表（可空）
     val wordCount: Int,
     val chapterCount: Int,
-    val status: String,       // published/draft
-    val publishTime: String,
+    val status: String?,       // published/draft
+    val publishTime: String?,
     val lastUpdateTime: String,
     val chapters: List<ArticleChapterMeta> // 章节列表
 )

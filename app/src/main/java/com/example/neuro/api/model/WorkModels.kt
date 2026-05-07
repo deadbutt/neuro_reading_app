@@ -95,6 +95,15 @@ data class WorkListItem(
 
 data class UploadDocxResponse(
     val articleId: String,
+    val creatorId: String,
+    val title: String,
+    val chapterCount: Int,
+    val wordCount: Int
+)
+
+data class UploadWorkResponse(
+    val articleId: String,
+    val creatorId: String,
     val title: String,
     val chapterCount: Int,
     val wordCount: Int

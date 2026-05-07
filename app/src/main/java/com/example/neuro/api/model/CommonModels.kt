@@ -29,10 +29,3 @@ data class UploadAvatarResponse(
     val filename: String,
     val url: String
 )
-
-// 作品上传响应
-data class UploadWorkResponse(
-    val workId: String,
-    val title: String,
-    val status: String
-)

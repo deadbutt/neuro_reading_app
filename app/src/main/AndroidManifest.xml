@@ -60,6 +60,7 @@
         <activity
             android:name=".UploadActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.TomatoRead"
             android:windowSoftInputMode="adjustResize">
 
@@ -69,6 +70,26 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:mimeType="text/plain" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+            </intent-filter>
+
+            <!-- 支持从文件管理器打开docx文件 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+            </intent-filter>
+
+            <!-- 支持从文件管理器打开md文件 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/markdown" />
                 <data android:scheme="content" />
                 <data android:scheme="file" />
             </intent-filter>
@@ -92,11 +113,25 @@
                 <data android:mimeType="application/x-mobipocket-ebook" />
             </intent-filter>
 
-            <!-- 支持分享文件到应用 -->
+            <!-- 支持分享txt文件到应用 -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <!-- 支持分享docx文件到应用 -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+            </intent-filter>
+
+            <!-- 支持分享md文件到应用 -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/markdown" />
             </intent-filter>
 
             <intent-filter>

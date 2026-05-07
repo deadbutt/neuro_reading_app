@@ -2,10 +2,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/white">
+    android:background="@color/app_background"
+    android:orientation="vertical">
 
-    <!-- 顶部栏 -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/top_bar_height"
@@ -15,12 +14,12 @@
         <ImageView
             android:id="@+id/iv_back"
             android:layout_width="@dimen/top_bar_icon_size"
-            android:layout_height="match_parent"
-            android:layout_alignParentStart="true"
+            android:layout_height="@dimen/top_bar_icon_size"
+            android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="12dp"
-            android:src="@drawable/ic_back_arrow"
-            android:contentDescription="返回" />
+            android:contentDescription="返回"
+            android:padding="10dp"
+            android:src="@drawable/ic_back_arrow" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -28,7 +27,7 @@
             android:layout_centerInParent="true"
             android:text="上传作品"
             android:textColor="@color/text_primary"
-            android:textSize="@dimen/text_large"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </RelativeLayout>
 
@@ -41,74 +40,61 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="@dimen/padding_horizontal">
+            android:padding="16dp">
 
-            <!-- 文件选择区域 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="选择文件"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
 
-            <LinearLayout
-                android:id="@+id/ll_select_file"
+            <FrameLayout
+                android:id="@+id/fl_file"
                 android:layout_width="match_parent"
                 android:layout_height="80dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_upload_area"
-                android:gravity="center"
-                android:orientation="vertical"
                 android:clickable="true"
                 android:focusable="true">
 
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/ic_upload_file"
-                    android:contentDescription="上传文件" />
-
-                <TextView
-                    android:id="@+id/tv_select_hint"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="点击选择文件"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-            </LinearLayout>
-
-            <!-- 已选文件信息 -->
-            <LinearLayout
-                android:id="@+id/ll_file_info"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="已选文件"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
                 <LinearLayout
+                    android:id="@+id/ll_file_hint"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_file_info"
-                    android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical">
 
                     <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
                         android:src="@drawable/ic_file_document"
-                        android:contentDescription="文件图标" />
+                        android:alpha="0.5"
+                        android:contentDescription="选择文件" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="点击选择 txt 或 md 文件"
+                        android:textColor="@color/text_hint"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_file_info"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:src="@drawable/ic_file_document"
+                        android:contentDescription="文件" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -131,30 +117,32 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/text_hint"
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <ImageView
-                        android:id="@+id/iv_remove_file"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:padding="6dp"
-                        android:src="@drawable/ic_close"
-                        android:contentDescription="移除文件" />
+                    <TextView
+                        android:id="@+id/tv_change_file"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_btn_add_shelf"
+                        android:paddingStart="12dp"
+                        android:paddingTop="4dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="4dp"
+                        android:text="更换"
+                        android:textColor="@color/primary_red"
+                        android:textSize="12sp" />
                 </LinearLayout>
-            </LinearLayout>
+            </FrameLayout>
 
-            <!-- 作品标题 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:text="作品标题"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
 
             <EditText
                 android:id="@+id/et_title"
@@ -162,48 +150,44 @@
                 android:layout_height="@dimen/input_height"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
-                android:hint="请输入作品标题"
+                android:hint="不填则使用文件名"
                 android:inputType="text"
                 android:maxLines="1"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
-                android:textSize="14sp" />
+                android:textSize="15sp" />
 
-            <!-- 作品简介 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="作品简介"
+                android:layout_marginTop="20dp"
+                android:text="作品简介（选填）"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
 
             <EditText
                 android:id="@+id/et_summary"
                 android:layout_width="match_parent"
-                android:layout_height="120dp"
+                android:layout_height="100dp"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
                 android:gravity="top"
-                android:hint="请输入作品简介（选填）"
+                android:hint="不填则自动生成"
                 android:inputType="textMultiLine"
                 android:padding="12dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
-                android:textSize="14sp" />
+                android:textSize="15sp" />
 
-            <!-- 标签 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="20dp"
                 android:text="标签（选填）"
                 android:textColor="@color/text_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="14sp" />
 
             <EditText
                 android:id="@+id/et_tags"
@@ -211,76 +195,102 @@
                 android:layout_height="@dimen/input_height"
                 android:layout_marginTop="8dp"
                 android:background="@drawable/bg_input_field"
-                android:hint="多个标签用逗号分隔，如：玄幻,热血"
+                android:hint="多个标签用逗号分隔"
                 android:inputType="text"
                 android:maxLines="1"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:textColor="@color/text_primary"
                 android:textColorHint="@color/text_hint"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="封面图片（选填）"
+                android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
-            <!-- 上传按钮 -->
+            <FrameLayout
+                android:id="@+id/fl_cover"
+                android:layout_width="100dp"
+                android:layout_height="133dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_book_cover_placeholder"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/iv_cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_cover_placeholder"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textColor="@color/white"
+                    android:textSize="40sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/ll_upload_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_image"
+                        android:alpha="0.5"
+                        android:contentDescription="上传封面" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="点击上传"
+                        android:textColor="@color/text_hint"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </FrameLayout>
+
             <TextView
-                android:id="@+id/btn_upload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="点击封面区域可上传图片"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tv_upload"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/btn_height"
+                android:layout_height="48dp"
                 android:layout_marginTop="32dp"
-                android:layout_marginBottom="24dp"
                 android:background="@drawable/bg_btn_primary"
                 android:gravity="center"
                 android:text="上传作品"
                 android:textColor="@color/white"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:clickable="true"
-                android:focusable="true" />
+                android:textSize="16sp" />
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp"
+                android:visibility="gone" />
 
         </LinearLayout>
     </ScrollView>
-
-    <!-- 上传进度遮罩 -->
-    <FrameLayout
-        android:id="@+id/fl_uploading"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#80000000"
-        android:visibility="gone"
-        android:clickable="true"
-        android:focusable="true">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="@drawable/bg_loading_dialog"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="24dp">
-
-            <ProgressBar
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:indeterminateTint="@color/primary_red" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="正在上传..."
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tv_upload_progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="0%"
-                android:textColor="@color/primary_red"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </FrameLayout>
 
 </LinearLayout>

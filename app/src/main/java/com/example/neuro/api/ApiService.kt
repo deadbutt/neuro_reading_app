@@ -154,13 +154,22 @@ interface ApiService {
     // ==================== 作品上传 ====================
 
     @Multipart
-    @POST("api/v1/upload/work")
-    suspend fun uploadWork(
+    @POST("api/v1/creator/works/upload/txt")
+    suspend fun uploadTxtWork(
         @Part file: MultipartBody.Part,
-        @Part("title") title: okhttp3.RequestBody,
-        @Part("summary") summary: okhttp3.RequestBody,
-        @Part("tags") tags: okhttp3.RequestBody
+        @Part("title") title: okhttp3.RequestBody?,
+        @Part("summary") summary: okhttp3.RequestBody?,
+        @Part("tags") tags: okhttp3.RequestBody?,
+        @Part("cover") cover: okhttp3.RequestBody?
     ): Response<BaseResponse<UploadWorkResponse>>
+
+    @Multipart
+    @POST("api/v1/creator/works/upload/docx")
+    suspend fun uploadDocx(
+        @Part file: MultipartBody.Part,
+        @Part("title") title: okhttp3.RequestBody?,
+        @Part("cover") cover: okhttp3.RequestBody?
+    ): Response<BaseResponse<UploadDocxResponse>>
 
     // ==================== 创作中心 ====================
 
@@ -221,13 +230,6 @@ interface ApiService {
         @Path("workId") workId: String,
         @Path("chapterIndex") chapterIndex: Int
     ): Response<BaseResponse<Unit>>
-
-    @Multipart
-    @POST("api/v1/creator/works/upload/docx")
-    suspend fun uploadDocx(
-        @Part file: MultipartBody.Part,
-        @Part("title") title: okhttp3.RequestBody?
-    ): Response<BaseResponse<UploadDocxResponse>>
 
     @Multipart
     @POST("api/v1/creator/works/upload/cover")

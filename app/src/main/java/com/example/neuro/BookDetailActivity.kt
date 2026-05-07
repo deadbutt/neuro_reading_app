@@ -82,9 +82,15 @@ class BookDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tv_detail_word_count).text = getString(R.string.detail_word_count_format, article.wordCount)
         android.util.Log.d("BookDetail", "article: id=${article.articleId}, title=${article.title}, author=${article.author}")
 
-        // 加载封面（如果有）
+        // 加载封面
         val ivCover = findViewById<ImageView>(R.id.iv_detail_cover)
-        // 封面 URL 需要后端提供，目前 API 中没有 cover 字段
+        if (!article.cover.isNullOrBlank()) {
+            val coverUrl = article.cover.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP)
+            Glide.with(this)
+                .load(coverUrl)
+                .placeholder(R.drawable.bg_book_cover_placeholder)
+                .into(ivCover)
+        }
 
         // 动态渲染 tags
         setupTags(article.tags)
@@ -166,11 +172,11 @@ class BookDetailActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupTags(tags: List<String>) {
+    private fun setupTags(tags: List<String>?) {
         val tagsContainer = findViewById<android.widget.LinearLayout>(R.id.ll_tags)
         tagsContainer.removeAllViews()
 
-        if (tags.isEmpty()) {
+        if (tags.isNullOrEmpty()) {
             findViewById<View>(R.id.ll_tags_container).visibility = View.GONE
             return
         }
