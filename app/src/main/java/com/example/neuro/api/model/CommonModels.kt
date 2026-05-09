@@ -9,11 +9,11 @@ data class BaseResponse<T>(
 
 // 分页响应包装
 data class PaginatedResponse<T>(
-    val list: List<T>,        // 数据列表
-    val total: Int,           // 总条数
-    val page: Int,            // 当前页
-    val pageSize: Int,        // 每页条数
-    val hasMore: Boolean      // 是否还有更多
+    val list: List<T> = emptyList(),        // 数据列表
+    val total: Int = 0,                     // 总条数
+    val page: Int = 1,                      // 当前页
+    val pageSize: Int = 20,                 // 每页条数
+    val hasMore: Boolean = false            // 是否还有更多
 )
 
 // 作者简要信息

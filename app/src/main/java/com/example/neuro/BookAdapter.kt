@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.neuro.util.UrlUtils
 
 data class BookItem(
     val bookId: String = "",
@@ -43,7 +44,7 @@ class BookAdapter(
             holder.ivCover.setImageResource(book.coverResId)
         } else if (book.coverUrl.isNotEmpty()) {
             com.bumptech.glide.Glide.with(holder.itemView.context)
-                .load(book.coverUrl.replace("0.0.0.0", "47.118.22.220"))
+                .load(UrlUtils.normalize(book.coverUrl))
                 .placeholder(R.drawable.bg_book_cover_placeholder)
                 .into(holder.ivCover)
         }

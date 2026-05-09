@@ -18,6 +18,8 @@ class HomeFragment : Fragment() {
     private lateinit var vIndicator: View
     private var currentTab: Int = 0
     private var indicatorInitialized = false
+    private var lastClickTime = 0L
+    private val clickCooldown = 300L
 
     private val fragments = mutableMapOf<Int, Fragment>()
 
@@ -44,6 +46,12 @@ class HomeFragment : Fragment() {
 
         tabs.forEachIndexed { index, tv ->
             tv.setOnClickListener {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastClickTime < clickCooldown) {
+                    return@setOnClickListener
+                }
+                lastClickTime = currentTime
+                
                 if (currentTab != index) {
                     switchTab(index)
                 }
@@ -65,7 +73,6 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // 移动下划线到选中的 Tab
         moveIndicatorToTab(index)
 
         val fragment = fragments.getOrPut(index) {
@@ -79,9 +86,21 @@ class HomeFragment : Fragment() {
             )
         }
 
-        childFragmentManager.beginTransaction()
-            .replace(R.id.fl_home_content, fragment)
-            .commitAllowingStateLoss()
+        val transaction = childFragmentManager.beginTransaction()
+        
+        fragments.values.forEach { f ->
+            if (f != fragment && f.isAdded) {
+                transaction.hide(f)
+            }
+        }
+        
+        if (fragment.isAdded) {
+            transaction.show(fragment)
+        } else {
+            transaction.add(R.id.fl_home_content, fragment)
+        }
+        
+        transaction.commitAllowingStateLoss()
     }
 
     private fun moveIndicatorToTab(index: Int) {

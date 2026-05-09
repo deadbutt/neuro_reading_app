@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="app_background">#F5F7FA</color>
-    <color name="primary_red">#FF6B6B</color>
-    <color name="primary_red_dark">#E55A5A</color>
+    <color name="primary_red">#E85555</color>
+    <color name="primary_red_dark">#D84848</color>
     <color name="text_primary">#333333</color>
     <color name="text_secondary">#999999</color>
     <color name="text_hint">#CCCCCC</color>
@@ -18,7 +18,7 @@
     <color name="star_gold">#FFB800</color>
     <color name="star_empty">#E0E0E0</color>
     <color name="chip_bg">#FFF0F0</color>
-    <color name="chip_text">#E55A5A</color>
+    <color name="chip_text">#D84848</color>
     <color name="trial_tag_bg">#FFF5E6</color>
     <color name="trial_tag_text">#FF9500</color>
     <color name="like_text">#888888</color>
@@ -32,7 +32,7 @@
     <color name="vip_tag_bg">#F0F0F0</color>
     <color name="vip_tag_text">#999999</color>
     <color name="toc_stats_text">#888888</color>
-    <color name="toc_current_dot">#FF6B6B</color>
+    <color name="toc_current_dot">#E85555</color>
     <color name="reader_bg_eye">#C8E6C0</color>
     <color name="reader_bg_parchment">#F5E6C8</color>
     <color name="rs_color_dot_border">#E0E0E0</color>
@@ -43,7 +43,7 @@
     <color name="neuro_card_bg">#FFFFFF</color>
     <color name="neuro_card_archive_bg">#F8F8F8</color>
     <color name="neuro_btn_bg">#1A1A2E</color>
-    <color name="neuro_selection">#FF6B6B</color>
-    <color name="neuro_accent">#E55A5A</color>
+    <color name="neuro_selection">#E85555</color>
+    <color name="neuro_accent">#D84848</color>
     <color name="neuro_tag_cloud">#F0F0F5</color>
 </resources>

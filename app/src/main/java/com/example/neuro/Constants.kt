@@ -27,4 +27,25 @@ object Constants {
         const val TEN_THOUSAND = 10000
         const val THOUSAND = 1000
     }
+    
+    object Validation {
+        const val MIN_PASSWORD_LENGTH = 6
+        const val MAX_PASSWORD_LENGTH = 20
+        const val VERIFICATION_CODE_LENGTH = 6
+        const val MIN_NICKNAME_LENGTH = 2
+        const val MAX_NICKNAME_LENGTH = 20
+    }
+    
+    object Time {
+        const val SESSION_DURATION_DAYS = 7
+        const val COUNTDOWN_SECONDS = 60
+    }
+    
+    object Message {
+        const val NETWORK_ERROR = "网络错误，请检查网络连接"
+        const val LOGIN_SUCCESS = "登录成功"
+        const val REGISTER_SUCCESS = "注册成功"
+        const val OPERATION_SUCCESS = "操作成功"
+        const val OPERATION_FAILED = "操作失败"
+    }
 }

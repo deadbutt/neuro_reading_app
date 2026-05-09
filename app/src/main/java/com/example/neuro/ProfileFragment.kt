@@ -19,6 +19,9 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.UpdateProfileRequest
+import com.example.neuro.repository.UserRepository
+import com.example.neuro.util.UrlUtils
+import com.example.neuro.util.showToast
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -35,11 +38,11 @@ class ProfileFragment : Fragment() {
     private lateinit var btnLogout: TextView
     private lateinit var tvShelfNum: TextView
     private lateinit var tvTimeNum: TextView
+    private val repository = UserRepository()
 
     companion object {
         private const val REQUEST_LOGIN = 1001
         private const val REQUEST_PICK_IMAGE = 1002
-        private const val IMAGE_SERVER_HOST = "47.118.22.220"
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -144,9 +147,8 @@ class ProfileFragment : Fragment() {
 
     private fun loadAvatar(avatarUrl: String?) {
         if (!avatarUrl.isNullOrEmpty()) {
-            val normalizedUrl = avatarUrl.replace("0.0.0.0", IMAGE_SERVER_HOST)
             Glide.with(this)
-                .load(normalizedUrl)
+                .load(UrlUtils.normalize(avatarUrl))
                 .placeholder(R.drawable.bg_profile_avatar)
                 .error(R.drawable.bg_profile_avatar)
                 .circleCrop()
@@ -163,7 +165,7 @@ class ProfileFragment : Fragment() {
                 if (response.isSuccessful && response.body()?.code == 0) {
                     val data = response.body()?.data
                     data?.let {
-                        val normalizedAvatar = it.avatar.replace("0.0.0.0", IMAGE_SERVER_HOST)
+                        val normalizedAvatar = UrlUtils.normalize(it.avatar)
                         UserManager.updateProfile(requireContext(), it.nickname, normalizedAvatar)
                         tvNickname.text = it.nickname
                         tvShelfNum.text = it.bookshelfCount.toString()
@@ -270,7 +272,7 @@ class ProfileFragment : Fragment() {
                 val response = RetrofitClient.apiService.uploadAvatar(body)
 
                 if (response.isSuccessful && response.body()?.code == 0) {
-                    val avatarUrl = response.body()?.data?.url?.replace("0.0.0.0", IMAGE_SERVER_HOST)
+                    val avatarUrl = UrlUtils.normalize(response.body()?.data?.url)
                     if (!avatarUrl.isNullOrEmpty()) {
                         // 更新用户资料中的头像URL
                         val updateResponse = RetrofitClient.apiService.updateUserProfile(

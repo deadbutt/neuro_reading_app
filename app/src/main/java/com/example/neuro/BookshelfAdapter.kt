@@ -8,6 +8,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.neuro.util.UrlUtils
 
 data class ShelfItem(
     val bookId: String = "",
@@ -52,7 +53,7 @@ class BookshelfAdapter(
         // 加载封面
         if (book.coverUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context)
-                .load(book.coverUrl.replace("0.0.0.0", "47.118.22.220"))
+                .load(UrlUtils.normalize(book.coverUrl))
                 .placeholder(R.drawable.bg_book_cover_placeholder)
                 .into(holder.ivCover)
         } else {

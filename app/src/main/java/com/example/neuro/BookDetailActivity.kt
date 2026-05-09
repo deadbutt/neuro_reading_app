@@ -12,8 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.ArticleMeta
+import com.example.neuro.repository.ArticleRepository
+import com.example.neuro.util.UrlUtils
+import com.example.neuro.util.showToast
 import kotlinx.coroutines.launch
 
 class BookDetailActivity : AppCompatActivity() {
@@ -30,6 +32,7 @@ class BookDetailActivity : AppCompatActivity() {
 
     private lateinit var articleId: String
     private var articleMeta: ArticleMeta? = null
+    private val repository = ArticleRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +40,7 @@ class BookDetailActivity : AppCompatActivity() {
 
         articleId = intent.getStringExtra(EXTRA_ARTICLE_ID) ?: ""
         if (articleId.isEmpty()) {
-            Toast.makeText(this, "文章ID错误", Toast.LENGTH_SHORT).show()
+            showToast("文章ID错误")
             finish()
             return
         }
@@ -57,19 +60,15 @@ class BookDetailActivity : AppCompatActivity() {
 
     private fun loadArticleDetail() {
         lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getArticleDetail(articleId)
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let {
-                        articleMeta = it
-                        displayArticleDetail(it)
-                    }
-                } else {
-                    Toast.makeText(this@BookDetailActivity, "加载文章详情失败", Toast.LENGTH_SHORT).show()
+            when (val result = repository.getArticleDetail(articleId)) {
+                is com.example.neuro.util.ApiResult.Success -> {
+                    articleMeta = result.data
+                    displayArticleDetail(result.data)
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@BookDetailActivity, "网络错误：${e.message}", Toast.LENGTH_SHORT).show()
+                is com.example.neuro.util.ApiResult.Error -> {
+                    showToast(result.message)
+                }
+                com.example.neuro.util.ApiResult.Loading -> {}
             }
         }
     }
@@ -85,9 +84,8 @@ class BookDetailActivity : AppCompatActivity() {
         // 加载封面
         val ivCover = findViewById<ImageView>(R.id.iv_detail_cover)
         if (!article.cover.isNullOrBlank()) {
-            val coverUrl = article.cover.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP)
             Glide.with(this)
-                .load(coverUrl)
+                .load(UrlUtils.normalize(article.cover))
                 .placeholder(R.drawable.bg_book_cover_placeholder)
                 .into(ivCover)
         }
@@ -104,23 +102,16 @@ class BookDetailActivity : AppCompatActivity() {
 
     private fun loadCommentsPreview() {
         lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getArticleComments(
-                    articleId = articleId,
-                    page = 1,
-                    pageSize = 2
-                )
-                if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
-                    val data = response.body()?.data
-                    val comments = data?.list ?: emptyList()
-                    displayCommentsPreview(comments, data?.total ?: 0)
-                } else {
-                    // API 未实现或出错，显示空状态
+            when (val result = repository.getArticleComments(articleId, page = 1, pageSize = 2)) {
+                is com.example.neuro.util.ApiResult.Success -> {
+                    val data = result.data
+                    val comments = data.list ?: emptyList()
+                    displayCommentsPreview(comments, data.total)
+                }
+                is com.example.neuro.util.ApiResult.Error -> {
                     displayCommentsPreview(emptyList(), 0)
                 }
-            } catch (e: Exception) {
-                // 网络错误，显示空状态
-                displayCommentsPreview(emptyList(), 0)
+                com.example.neuro.util.ApiResult.Loading -> {}
             }
         }
     }
@@ -142,7 +133,7 @@ class BookDetailActivity : AppCompatActivity() {
             val commentItems = comments.map { comment ->
                 CommentItem(
                     name = comment.userName,
-                    avatarUrl = comment.userAvatar.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP),
+                    avatarUrl = UrlUtils.normalize(comment.userAvatar),
                     time = comment.createTime,
                     content = comment.content,
                     likes = formatCount(comment.likeCount),
@@ -153,7 +144,7 @@ class BookDetailActivity : AppCompatActivity() {
             rvReviews.layoutManager = LinearLayoutManager(this)
             rvReviews.adapter = CommentAdapter(commentItems,
                 onLikeClick = { _, _ ->
-                    Toast.makeText(this, R.string.msg_like_success, Toast.LENGTH_SHORT).show()
+                    showToast(R.string.msg_like_success)
                 },
                 onReplyClick = {
                     showComments()
@@ -228,24 +219,21 @@ class BookDetailActivity : AppCompatActivity() {
         if (firstChapter != null) {
             ReaderActivity.start(this, article.articleId, firstChapter.index, article.title)
         } else {
-            Toast.makeText(this, "暂无章节", Toast.LENGTH_SHORT).show()
+            showToast("暂无章节")
         }
     }
 
     private fun toggleBookshelf() {
         val article = articleMeta ?: return
         lifecycleScope.launch {
-            try {
-                // 这里需要判断是否在书架中，但 API 目前没有返回 isInBookshelf
-                // 简化处理：直接加入书架
-                val response = RetrofitClient.apiService.addToBookshelf(articleId)
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    Toast.makeText(this@BookDetailActivity, "已加入书架", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@BookDetailActivity, "操作失败", Toast.LENGTH_SHORT).show()
+            when (val result = repository.addToBookshelf(articleId)) {
+                is com.example.neuro.util.ApiResult.Success -> {
+                    showToast("已加入书架")
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@BookDetailActivity, "网络错误", Toast.LENGTH_SHORT).show()
+                is com.example.neuro.util.ApiResult.Error -> {
+                    showToast(result.message)
+                }
+                com.example.neuro.util.ApiResult.Loading -> {}
             }
         }
     }
@@ -271,7 +259,7 @@ class BookDetailActivity : AppCompatActivity() {
     private fun goToAuthorProfile() {
         // 作者 ID 需要从后端获取，目前 API 中 author 是字符串
         // 简化处理：暂不跳转
-        Toast.makeText(this, "作者主页", Toast.LENGTH_SHORT).show()
+        showToast("作者主页")
     }
 
     private fun toggleSynopsis() {

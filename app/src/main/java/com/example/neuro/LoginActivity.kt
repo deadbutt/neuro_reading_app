@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.*
+import com.example.neuro.repository.UserRepository
+import com.example.neuro.util.showToast
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 
@@ -36,6 +38,7 @@ class LoginActivity : AppCompatActivity() {
     private var currentTab = 0
     private var countDownTimer: CountDownTimer? = null
     private var isCountingDown = false
+    private val repository = UserRepository()
 
     private lateinit var llLoginForm: LinearLayout
     private lateinit var llRegisterForm: LinearLayout
@@ -108,12 +111,12 @@ class LoginActivity : AppCompatActivity() {
             val password = etPassword.text.toString().trim()
 
             if (account.isEmpty() || !isValidAccount(account)) {
-                Toast.makeText(this, getString(R.string.login_invalid_account), Toast.LENGTH_SHORT).show()
+                showToast(R.string.login_invalid_account)
                 return@setOnClickListener
             }
 
-            if (password.length < 6) {
-                Toast.makeText(this, "密码至少6位", Toast.LENGTH_SHORT).show()
+            if (password.length < Constants.Validation.MIN_PASSWORD_LENGTH) {
+                showToast("密码至少${Constants.Validation.MIN_PASSWORD_LENGTH}位")
                 return@setOnClickListener
             }
 

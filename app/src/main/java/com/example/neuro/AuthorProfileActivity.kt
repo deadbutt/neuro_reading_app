@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.neuro.api.RetrofitClient
+import com.example.neuro.util.UrlUtils
 import kotlinx.coroutines.launch
 
 class AuthorProfileActivity : AppCompatActivity() {
@@ -70,7 +71,7 @@ class AuthorProfileActivity : AppCompatActivity() {
                         // 加载头像
                         if (author.avatar.isNotEmpty()) {
                             com.bumptech.glide.Glide.with(this@AuthorProfileActivity)
-                                .load(author.avatar.replace("0.0.0.0", "47.118.22.220"))
+                                .load(UrlUtils.normalize(author.avatar))
                                 .placeholder(R.drawable.bg_avatar_placeholder)
                                 .circleCrop()
                                 .into(findViewById(R.id.iv_author_avatar))

@@ -17,9 +17,9 @@
     <dimen name="banner_margin">8dp</dimen>
     <dimen name="quick_entry_height">80dp</dimen>
     <dimen name="quick_icon_size">36dp</dimen>
-    <dimen name="book_cover_width">80dp</dimen>
-    <dimen name="book_cover_height">106dp</dimen>
-    <dimen name="book_cover_radius">6dp</dimen>
+    <dimen name="book_cover_width">100dp</dimen>
+    <dimen name="book_cover_height">133dp</dimen>
+    <dimen name="book_cover_radius">8dp</dimen>
     <dimen name="bottom_nav_height">56dp</dimen>
     <dimen name="bottom_nav_icon_size">22dp</dimen>
     <dimen name="hot_dot_size">6dp</dimen>
@@ -44,8 +44,8 @@
     <dimen name="divider_height">0.5dp</dimen>
     <dimen name="add_shelf_icon_size">22dp</dimen>
 
-    <dimen name="detail_cover_width">120dp</dimen>
-    <dimen name="detail_cover_height">160dp</dimen>
+    <dimen name="detail_cover_width">150dp</dimen>
+    <dimen name="detail_cover_height">200dp</dimen>
     <dimen name="detail_cover_radius">12dp</dimen>
     <dimen name="detail_star_size">16dp</dimen>
     <dimen name="detail_btn_height">44dp</dimen>
