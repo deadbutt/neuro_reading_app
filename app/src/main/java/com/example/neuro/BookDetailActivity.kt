@@ -121,7 +121,11 @@ class BookDetailActivity : AppCompatActivity() {
         val tvEmpty = findViewById<TextView>(R.id.tv_reviews_empty)
         val tvCount = findViewById<TextView>(R.id.tv_reviews_count)
 
-        tvCount.text = getString(R.string.detail_reviews_count_format, total)
+        tvCount.text = if (total > 0) {
+            getString(R.string.detail_reviews_count_format, total)
+        } else {
+            "0条"
+        }
 
         if (comments.isEmpty()) {
             rvReviews.visibility = View.GONE
@@ -257,9 +261,13 @@ class BookDetailActivity : AppCompatActivity() {
     }
 
     private fun goToAuthorProfile() {
-        // 作者 ID 需要从后端获取，目前 API 中 author 是字符串
-        // 简化处理：暂不跳转
-        showToast("作者主页")
+        val article = articleMeta ?: return
+        
+        if (!article.creatorId.isNullOrBlank()) {
+            AuthorProfileActivity.start(this, article.creatorId)
+        } else {
+            showToast("作者信息暂不可用")
+        }
     }
 
     private fun toggleSynopsis() {

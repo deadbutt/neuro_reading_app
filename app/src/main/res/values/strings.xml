@@ -68,7 +68,6 @@
     <string name="detail_comment_hint">说点什么吧…</string>
 
     <string name="comments_title">书评</string>
-    <string name="comments_count">128条</string>
     <string name="comments_sort_hot">最热</string>
     <string name="comments_sort_new">最新</string>
     <string name="comments_sort_author">作者回复</string>

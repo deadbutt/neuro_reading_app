@@ -36,11 +36,7 @@ object ApiHelper {
             
             if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
                 val data = response.body()?.data
-                if (data != null) {
-                    ApiResult.Success(data)
-                } else {
-                    ApiResult.Error("数据为空")
-                }
+                ApiResult.Success(data!!)  // 允许data内部的字段为null
             } else {
                 val message = response.body()?.message ?: "请求失败"
                 ApiResult.Error(message)

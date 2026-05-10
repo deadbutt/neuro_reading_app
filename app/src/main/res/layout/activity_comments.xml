@@ -44,7 +44,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="@string/comments_count"
+                android:text="0条"
                 android:textColor="@color/text_secondary"
                 android:textSize="@dimen/comment_top_bar_count_size" />
         </LinearLayout>

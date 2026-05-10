@@ -39,6 +39,8 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private lateinit var articleId: String
+    private lateinit var tvCommentCount: TextView
+    private lateinit var llEmptyState: View
     private lateinit var tvSortHot: TextView
     private lateinit var tvSortNew: TextView
     private lateinit var tvSortAuthor: TextView
@@ -62,6 +64,8 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        tvCommentCount = view.findViewById(R.id.tv_comment_count)
+        llEmptyState = view.findViewById(R.id.ll_empty_state)
         tvSortHot = view.findViewById(R.id.tv_sort_hot)
         tvSortNew = view.findViewById(R.id.tv_sort_new)
         tvSortAuthor = view.findViewById(R.id.tv_sort_author)
@@ -101,21 +105,65 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                     page = currentPage,
                     sort = currentSort
                 )
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { page ->
-                        val newComments = page.list.map { it.toCommentItem() }
-                        if (currentPage == 1) {
-                            comments.clear()
-                        }
-                        comments.addAll(newComments)
-                        adapter.notifyDataSetChanged()
-                    }
+                
+                android.util.Log.d("CommentsDebug", "HTTP isSuccessful=${response.isSuccessful}, code=${response.code()}")
+                
+                if (!response.isSuccessful) {
+                    android.util.Log.d("CommentsDebug", "HTTP not successful")
+                    tvCommentCount.text = "0条"
+                    llEmptyState.visibility = View.VISIBLE
+                    srl.isRefreshing = false
+                    return@launch
+                }
+                
+                val body = response.body()
+                android.util.Log.d("CommentsDebug", "body=$body")
+                
+                if (body == null) {
+                    android.util.Log.d("CommentsDebug", "body is null!")
+                    tvCommentCount.text = "0条"
+                    llEmptyState.visibility = View.VISIBLE
+                    srl.isRefreshing = false
+                    return@launch
+                }
+                
+                android.util.Log.d("CommentsDebug", "body.code=${body.code}")
+                
+                if (body.code != 0) {
+                    android.util.Log.d("CommentsDebug", "body.code != 0")
+                    tvCommentCount.text = "0条"
+                    llEmptyState.visibility = View.VISIBLE
+                    srl.isRefreshing = false
+                    return@launch
+                }
+                
+                val paginatedData = body.data
+                val total = paginatedData?.total ?: 0
+                val commentsList = paginatedData?.list ?: emptyList()
+                
+                android.util.Log.d("CommentsDebug", "total=$total, listSize=${commentsList.size}")
+                
+                tvCommentCount.text = "${total}条"
+                
+                val newComments = commentsList.map { it.toCommentItem() }
+                
+                if (currentPage == 1) {
+                    comments.clear()
+                }
+                
+                if (newComments.isEmpty() && currentPage == 1) {
+                    llEmptyState.visibility = View.VISIBLE
                 } else {
-                    Toast.makeText(requireContext(), R.string.error_load_comments_failed, Toast.LENGTH_SHORT).show()
+                    llEmptyState.visibility = View.GONE
+                    comments.addAll(newComments)
+                    adapter.notifyDataSetChanged()
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), R.string.error_network, Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+                android.util.Log.e("CommentsDebug", "Exception: ${e.message}")
+                tvCommentCount.text = "0条"
+                llEmptyState.visibility = View.VISIBLE
+                Toast.makeText(requireContext(), "网络错误，请检查网络连接", Toast.LENGTH_SHORT).show()
             } finally {
                 srl.isRefreshing = false
             }
@@ -125,7 +173,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private fun CommentResponse.toCommentItem(): CommentItem {
         return CommentItem(
             name = this.userName,
-            avatarUrl = this.userAvatar.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP),
+            avatarUrl = com.example.neuro.util.UrlUtils.normalize(this.userAvatar),
             time = this.createTime,
             content = this.content,
             likes = formatCount(this.likeCount),

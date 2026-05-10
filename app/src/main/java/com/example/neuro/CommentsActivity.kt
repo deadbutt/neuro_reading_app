@@ -16,6 +16,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.CommentResponse
 import com.example.neuro.api.model.PostCommentRequest
+import com.example.neuro.util.UrlUtils
 import kotlinx.coroutines.launch
 
 class CommentsActivity : AppCompatActivity() {
@@ -35,6 +36,7 @@ class CommentsActivity : AppCompatActivity() {
     private lateinit var tvSortNew: TextView
     private lateinit var tvSortAuthor: TextView
     private lateinit var vIndicatorHot: View
+    private lateinit var tvCommentCount: TextView
     private var currentSort: String = "hot"
     private var currentPage: Int = 1
 
@@ -54,6 +56,7 @@ class CommentsActivity : AppCompatActivity() {
         tvSortNew = findViewById(R.id.tv_sort_new)
         tvSortAuthor = findViewById(R.id.tv_sort_author)
         vIndicatorHot = findViewById(R.id.v_indicator_hot)
+        tvCommentCount = findViewById(R.id.tv_comment_count)
 
         setupSortTabs()
         setupRecyclerView()
@@ -70,21 +73,62 @@ class CommentsActivity : AppCompatActivity() {
                     page = currentPage,
                     sort = currentSort
                 )
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { page ->
-                        val newComments = page.list.map { it.toCommentItem() }
-                        if (currentPage == 1) {
-                            comments.clear()
-                        }
-                        comments.addAll(newComments)
-                        adapter.notifyDataSetChanged()
-                    }
+                
+                android.util.Log.d("CommentsDebug", "HTTP isSuccessful=${response.isSuccessful}, code=${response.code()}")
+                
+                if (!response.isSuccessful) {
+                    android.util.Log.d("CommentsDebug", "HTTP not successful")
+                    tvCommentCount.text = "0条"
+                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
+                    srl.isRefreshing = false
+                    return@launch
+                }
+                
+                val body = response.body()
+                android.util.Log.d("CommentsDebug", "body=$body")
+                
+                if (body == null) {
+                    android.util.Log.d("CommentsDebug", "body is null!")
+                    tvCommentCount.text = "0条"
+                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
+                    srl.isRefreshing = false
+                    return@launch
+                }
+                
+                android.util.Log.d("CommentsDebug", "body.code=${body.code}")
+                
+                if (body.code != 0) {
+                    android.util.Log.d("CommentsDebug", "body.code != 0")
+                    tvCommentCount.text = "0条"
+                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
+                    srl.isRefreshing = false
+                    return@launch
+                }
+                
+                val paginatedData = body.data
+                val total = paginatedData?.total ?: 0
+                val commentsList = paginatedData?.list ?: emptyList()
+                
+                android.util.Log.d("CommentsDebug", "total=$total, listSize=${commentsList.size}")
+                
+                val newComments = commentsList.map { it.toCommentItem() }
+                
+                tvCommentCount.text = "${total}条"
+                
+                if (currentPage == 1) {
+                    comments.clear()
+                }
+                
+                if (newComments.isEmpty() && currentPage == 1) {
+                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this@CommentsActivity, "加载评论失败", Toast.LENGTH_SHORT).show()
+                    comments.addAll(newComments)
+                    adapter.notifyDataSetChanged()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@CommentsActivity, "网络错误", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
+                tvCommentCount.text = "0条"
+                Toast.makeText(this@CommentsActivity, "网络错误，请检查网络连接", Toast.LENGTH_SHORT).show()
             } finally {
                 srl.isRefreshing = false
             }
@@ -94,7 +138,7 @@ class CommentsActivity : AppCompatActivity() {
     private fun CommentResponse.toCommentItem(): CommentItem {
         return CommentItem(
             name = this.userName,
-            avatarUrl = this.userAvatar.replace(Constants.Network.PLACEHOLDER_IP, Constants.Network.REAL_IP),
+            avatarUrl = UrlUtils.normalize(this.userAvatar),
             time = this.createTime,
             content = this.content,
             likes = formatCount(this.likeCount),
