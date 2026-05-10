@@ -14,26 +14,26 @@ class BookDetailViewModel : ViewModel() {
     
     private val repository = ArticleRepository()
     
-    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<BookDetailUiState>(BookDetailUiState.Idle)
+    val uiState: StateFlow<BookDetailUiState> = _uiState.asStateFlow()
     
     private val _article = MutableStateFlow<ArticleMeta?>(null)
     val article: StateFlow<ArticleMeta?> = _article.asStateFlow()
     
     fun loadArticleDetail(articleId: String) {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            _uiState.value = BookDetailUiState.Loading
             
             when (val result = repository.getArticleDetail(articleId)) {
                 is ApiResult.Success -> {
                     _article.value = result.data
-                    _uiState.value = UiState.Success
+                    _uiState.value = BookDetailUiState.Success
                 }
                 is ApiResult.Error -> {
-                    _uiState.value = UiState.Error(result.message)
+                    _uiState.value = BookDetailUiState.Error(result.message)
                 }
                 ApiResult.Loading -> {
-                    _uiState.value = UiState.Loading
+                    _uiState.value = BookDetailUiState.Loading
                 }
             }
         }
@@ -54,9 +54,9 @@ class BookDetailViewModel : ViewModel() {
     }
 }
 
-sealed class UiState {
-    object Idle : UiState()
-    object Loading : UiState()
-    object Success : UiState()
-    data class Error(val message: String) : UiState()
+sealed class BookDetailUiState {
+    object Idle : BookDetailUiState()
+    object Loading : BookDetailUiState()
+    object Success : BookDetailUiState()
+    data class Error(val message: String) : BookDetailUiState()
 }

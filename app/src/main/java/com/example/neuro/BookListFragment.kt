@@ -71,6 +71,14 @@ class BookListFragment : Fragment() {
 
     private fun setupRecyclerView() {
         rvBookList.layoutManager = LinearLayoutManager(requireContext())
+        
+        rvBookList.apply {
+            setHasFixedSize(true)
+            setItemViewCacheSize(20)
+            drawingCacheQuality = View.DRAWING_CACHE_QUALITY_HIGH
+            recycledViewPool.setMaxRecycledViews(0, 20)
+        }
+        
         adapter = BookAdapter(allBooks) { book ->
             if (book.bookId.isNotEmpty()) {
                 BookDetailActivity.start(requireContext(), book.bookId)
@@ -138,6 +146,7 @@ class BookListFragment : Fragment() {
 
                         if (isRefresh) {
                             allBooks.clear()
+                            adapter.notifyDataSetChanged()
                         }
 
                         if (newItems.isEmpty()) {
@@ -146,12 +155,12 @@ class BookListFragment : Fragment() {
                                 Toast.makeText(requireContext(), R.string.msg_no_more_data, Toast.LENGTH_SHORT).show()
                             }
                         } else {
+                            val startPosition = allBooks.size
                             allBooks.addAll(newItems)
                             currentPage++
                             hasMoreData = page.hasMore
+                            adapter.notifyItemRangeInserted(startPosition, newItems.size)
                         }
-
-                        adapter.notifyDataSetChanged()
                     }
                 } else if (isAdded) {
                     Toast.makeText(requireContext(), R.string.error_load_failed, Toast.LENGTH_SHORT).show()

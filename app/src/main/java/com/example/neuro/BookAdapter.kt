@@ -37,20 +37,31 @@ class BookAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val book = books[position]
+        
         holder.tvTitle.text = book.title
         holder.tvAuthor.text = book.author
         holder.tvDesc.text = book.desc
+        
         if (book.coverResId != 0) {
             holder.ivCover.setImageResource(book.coverResId)
         } else if (book.coverUrl.isNotEmpty()) {
             com.bumptech.glide.Glide.with(holder.itemView.context)
                 .load(UrlUtils.normalize(book.coverUrl))
                 .placeholder(R.drawable.bg_book_cover_placeholder)
+                .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.ALL)
+                .skipMemoryCache(false)
+                .override(200, 266)
                 .into(holder.ivCover)
         }
+        
         holder.itemView.setOnClickListener { onItemClick(book) }
         holder.ivAddShelf.setOnClickListener { onItemClick(book) }
     }
 
     override fun getItemCount(): Int = books.size
+    
+    override fun onViewRecycled(holder: ViewHolder) {
+        super.onViewRecycled(holder)
+        com.bumptech.glide.Glide.with(holder.itemView.context).clear(holder.ivCover)
+    }
 }

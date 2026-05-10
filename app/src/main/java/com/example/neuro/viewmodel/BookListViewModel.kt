@@ -17,8 +17,8 @@ class BookListViewModel @Inject constructor(
     private val repository: BookRepository
 ) : ViewModel() {
     
-    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<BookListUiState>(BookListUiState.Idle)
+    val uiState: StateFlow<BookListUiState> = _uiState.asStateFlow()
     
     private val _books = MutableStateFlow<List<ArticleIndex>>(emptyList())
     val books: StateFlow<List<ArticleIndex>> = _books.asStateFlow()
@@ -35,7 +35,7 @@ class BookListViewModel @Inject constructor(
         }
         
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
+            _uiState.value = BookListUiState.Loading
             
             when (val result = repository.getArticles(type, currentPage, forceRefresh = isRefresh)) {
                 is ApiResult.Success -> {
@@ -49,10 +49,10 @@ class BookListViewModel @Inject constructor(
                     if (newBooks.isNotEmpty()) {
                         currentPage++
                     }
-                    _uiState.value = UiState.Success
+                    _uiState.value = BookListUiState.Success
                 }
                 is ApiResult.Error -> {
-                    _uiState.value = UiState.Error(result.message)
+                    _uiState.value = BookListUiState.Error(result.message)
                 }
                 ApiResult.Loading -> {}
             }
@@ -60,9 +60,9 @@ class BookListViewModel @Inject constructor(
     }
 }
 
-sealed class UiState {
-    object Idle : UiState()
-    object Loading : UiState()
-    object Success : UiState()
-    data class Error(val message: String) : UiState()
+sealed class BookListUiState {
+    object Idle : BookListUiState()
+    object Loading : BookListUiState()
+    object Success : BookListUiState()
+    data class Error(val message: String) : BookListUiState()
 }
