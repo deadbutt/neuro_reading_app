@@ -8,74 +8,81 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.neuro.api.RetrofitClient
+import com.example.neuro.databinding.FragmentSearchBinding
+import com.example.neuro.viewmodel.SearchUiState
+import com.example.neuro.viewmodel.SearchViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class SearchFragment : Fragment() {
 
-    private val searchResults = mutableListOf<BookItem>()
+    private var _binding: FragmentSearchBinding? = null
+    private val binding get() = _binding!!
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_search, container, false)
+    private val viewModel: SearchViewModel by viewModels()
+    private val searchResults = mutableListOf<BookItem>()
+    private lateinit var adapter: BookAdapter
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentSearchBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.findViewById<View>(R.id.tv_search_cancel).setOnClickListener {
+        setupRecyclerView()
+        setupSearchInput()
+        setupHistoryActions()
+        observeViewModel()
+
+        binding.tvSearchCancel.setOnClickListener {
             parentFragmentManager.popBackStack()
         }
-
-        setupSearchInput(view)
-        setupHistoryActions(view)
     }
 
-    private fun setupSearchInput(view: View) {
-        val etSearch = view.findViewById<EditText>(R.id.et_search)
-        val ivClear = view.findViewById<View>(R.id.iv_search_clear)
-
-        etSearch.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                val hasText = !s.isNullOrEmpty()
-                ivClear.visibility = if (hasText) View.VISIBLE else View.GONE
-
-                if (hasText) {
-                    performSearch(view, s.toString())
-                } else {
-                    showInitialState(view)
-                }
+    private fun setupRecyclerView() {
+        binding.rvSearchResult.layoutManager = LinearLayoutManager(requireContext())
+        adapter = BookAdapter(searchResults) { book ->
+            if (book.bookId.isNotEmpty()) {
+                BookDetailActivity.start(requireContext(), book.bookId)
             }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
-
-        ivClear.setOnClickListener { etSearch.text.clear() }
-
-        etSearch.requestFocus()
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.showSoftInput(etSearch, InputMethodManager.SHOW_IMPLICIT)
+        }
+        binding.rvSearchResult.adapter = adapter
     }
 
-    private fun performSearch(view: View, query: String) {
-        saveSearchHistory(query)
-        view.findViewById<View>(R.id.ll_search_history).visibility = View.GONE
-        view.findViewById<View>(R.id.ll_search_hot).visibility = View.GONE
-        view.findViewById<View>(R.id.ll_search_result).visibility = View.VISIBLE
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is SearchUiState.Loading -> {
+                                binding.llSearchEmpty.visibility = View.GONE
+                            }
+                            is SearchUiState.Success -> {
+                                // Handled by searchResults collection
+                            }
+                            is SearchUiState.Error -> {
+                                Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
+                        }
+                    }
+                }
 
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.searchArticles(keyword = query)
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { articles ->
+                launch {
+                    viewModel.searchResults.collect { articles ->
                         searchResults.clear()
                         searchResults.addAll(articles.map { article ->
                             BookItem(
@@ -85,64 +92,82 @@ class SearchFragment : Fragment() {
                                 desc = article.summary
                             )
                         })
-                        showSearchResults(view)
+                        adapter.notifyDataSetChanged()
+                        updateSearchResultVisibility()
                     }
-                } else {
-                    Toast.makeText(requireContext(), "搜索失败", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "网络错误", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun showSearchResults(view: View) {
-        val resultRv = view.findViewById<RecyclerView>(R.id.rv_search_result)
-        val emptyView = view.findViewById<View>(R.id.ll_search_empty)
-
+    private fun updateSearchResultVisibility() {
         if (searchResults.isEmpty()) {
-            emptyView.visibility = View.VISIBLE
-            resultRv.visibility = View.GONE
+            binding.llSearchEmpty.visibility = View.VISIBLE
+            binding.rvSearchResult.visibility = View.GONE
         } else {
-            emptyView.visibility = View.GONE
-            resultRv.visibility = View.VISIBLE
-            resultRv.layoutManager = LinearLayoutManager(requireContext())
-            resultRv.adapter = BookAdapter(searchResults) { book ->
-                if (book.bookId.isNotEmpty()) {
-                    BookDetailActivity.start(requireContext(), book.bookId)
+            binding.llSearchEmpty.visibility = View.GONE
+            binding.rvSearchResult.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setupSearchInput() {
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val hasText = !s.isNullOrEmpty()
+                binding.ivSearchClear.visibility = if (hasText) View.VISIBLE else View.GONE
+
+                if (hasText) {
+                    performSearch(s.toString())
+                } else {
+                    showInitialState()
                 }
             }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+
+        binding.ivSearchClear.setOnClickListener { binding.etSearch.text.clear() }
+
+        binding.etSearch.requestFocus()
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(binding.etSearch, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    private fun performSearch(query: String) {
+        saveSearchHistory(query)
+        binding.llSearchHistory.visibility = View.GONE
+        binding.llSearchHot.visibility = View.GONE
+        binding.llSearchResult.visibility = View.VISIBLE
+        viewModel.search(query)
+    }
+
+    private fun showInitialState() {
+        binding.llSearchResult.visibility = View.GONE
+        binding.llSearchHot.visibility = View.VISIBLE
+        binding.llSearchHistory.visibility = View.VISIBLE
+    }
+
+    private fun setupHistoryActions() {
+        binding.llClearHistory.setOnClickListener {
+            clearHistory()
         }
+
+        loadHistoryTags()
     }
 
-    private fun showInitialState(view: View) {
-        view.findViewById<View>(R.id.ll_search_result).visibility = View.GONE
-        view.findViewById<View>(R.id.ll_search_hot).visibility = View.VISIBLE
-        view.findViewById<View>(R.id.ll_search_history).visibility = View.VISIBLE
-    }
-
-    private fun setupHistoryActions(view: View) {
-        view.findViewById<View>(R.id.ll_clear_history).setOnClickListener {
-            clearHistory(view)
-        }
-
-        loadHistoryTags(view)
-    }
-
-    private fun clearHistory(view: View) {
+    private fun clearHistory() {
         val prefs = requireContext().getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
         prefs.edit().remove(KEY_HISTORY).apply()
-        view.findViewById<View>(R.id.ll_search_history).visibility = View.GONE
+        binding.llSearchHistory.visibility = View.GONE
         Toast.makeText(requireContext(), R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
     }
 
-    private fun loadHistoryTags(view: View) {
-        val tagsContainer = view.findViewById<LinearLayout>(R.id.ll_history_tags)
-        tagsContainer.removeAllViews()
+    private fun loadHistoryTags() {
+        binding.llHistoryTags.removeAllViews()
 
         val historyTags = getSearchHistory()
         if (historyTags.isEmpty()) {
-            view.findViewById<View>(R.id.ll_search_history).visibility = View.GONE
+            binding.llSearchHistory.visibility = View.GONE
             return
         }
 
@@ -154,7 +179,7 @@ class SearchFragment : Fragment() {
                 background = requireContext().getDrawable(R.drawable.bg_search_history_tag)
                 setPadding(48, 12, 48, 12)
                 setOnClickListener {
-                    view.findViewById<EditText>(R.id.et_search).setText(tag)
+                    binding.etSearch.setText(tag)
                 }
             }
             val params = LinearLayout.LayoutParams(
@@ -164,7 +189,7 @@ class SearchFragment : Fragment() {
                 marginEnd = 12
                 bottomMargin = 12
             }
-            tagsContainer.addView(tv, params)
+            binding.llHistoryTags.addView(tv, params)
         }
     }
 
@@ -182,6 +207,11 @@ class SearchFragment : Fragment() {
         history.add(0, query)
         if (history.size > MAX_HISTORY_SIZE) history.subList(MAX_HISTORY_SIZE, history.size).clear()
         prefs.edit().putString(KEY_HISTORY, history.joinToString(",")).apply()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     companion object {

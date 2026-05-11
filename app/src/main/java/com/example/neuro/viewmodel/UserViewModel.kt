@@ -6,25 +6,28 @@ import com.example.neuro.api.model.LoginResponse
 import com.example.neuro.api.model.UserProfileResponse
 import com.example.neuro.repository.UserRepository
 import com.example.neuro.util.ApiResult
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class UserViewModel : ViewModel() {
-    
-    private val repository = UserRepository()
-    
+@HiltViewModel
+class UserViewModel @Inject constructor(
+    private val repository: UserRepository
+) : ViewModel() {
+
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
-    
+
     private val _userProfile = MutableStateFlow<UserProfileResponse?>(null)
     val userProfile: StateFlow<UserProfileResponse?> = _userProfile.asStateFlow()
-    
+
     fun login(account: String, password: String) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
-            
+
             when (val result = repository.login(account, password)) {
                 is ApiResult.Success -> {
                     _loginState.value = LoginState.Success(result.data)
@@ -38,7 +41,7 @@ class UserViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun register(
         account: String,
         code: String,
@@ -48,7 +51,7 @@ class UserViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             _loginState.value = LoginState.Loading
-            
+
             when (val result = repository.register(account, code, password, confirmPassword, nickname)) {
                 is ApiResult.Success -> {
                     _loginState.value = LoginState.Success(result.data)
@@ -62,7 +65,7 @@ class UserViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun sendVerificationCode(account: String, type: String, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             when (val result = repository.sendVerificationCode(account, type)) {
@@ -76,7 +79,7 @@ class UserViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun getUserProfile() {
         viewModelScope.launch {
             when (val result = repository.getUserProfile()) {
@@ -90,7 +93,7 @@ class UserViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun resetState() {
         _loginState.value = LoginState.Idle
     }

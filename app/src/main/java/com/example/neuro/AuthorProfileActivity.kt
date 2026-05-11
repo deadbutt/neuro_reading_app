@@ -5,17 +5,22 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.neuro.api.RetrofitClient
+import com.bumptech.glide.Glide
+import com.example.neuro.databinding.ActivityAuthorProfileBinding
 import com.example.neuro.util.UrlUtils
+import com.example.neuro.viewmodel.AuthorProfileUiState
+import com.example.neuro.viewmodel.AuthorProfileViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class AuthorProfileActivity : AppCompatActivity() {
 
     companion object {
@@ -28,8 +33,9 @@ class AuthorProfileActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var binding: ActivityAuthorProfileBinding
+    private val viewModel: AuthorProfileViewModel by viewModels()
     private lateinit var authorId: String
-    private var isFollowing = false
     private var currentTab = 0
 
     private val dynamicItems = mutableListOf<FeedActivityItem>()
@@ -37,7 +43,8 @@ class AuthorProfileActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_author_profile)
+        binding = ActivityAuthorProfileBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         authorId = intent.getStringExtra(EXTRA_AUTHOR_ID) ?: ""
         if (authorId.isEmpty()) {
@@ -46,57 +53,56 @@ class AuthorProfileActivity : AppCompatActivity() {
             return
         }
 
-        findViewById<View>(R.id.iv_back).setOnClickListener { finish() }
+        binding.ivBack.setOnClickListener { finish() }
 
-        loadAuthorProfile()
-        setupFollowButton()
         setupTabs()
-        showDynamicList()
+        observeViewModel()
+        viewModel.loadAuthorProfile(authorId)
     }
 
-    private fun loadAuthorProfile() {
+    private fun observeViewModel() {
         lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getAuthorProfile(authorId)
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { author ->
-                        findViewById<TextView>(R.id.tv_author_name).text = author.name
-                        findViewById<TextView>(R.id.tv_author_desc).text = author.description
-                        findViewById<TextView>(R.id.tv_title).text = "${author.name} 的主页"
-                        findViewById<TextView>(R.id.tv_followers_count).text = "${author.followersCount}"
-                        findViewById<TextView>(R.id.tv_works_count).text = "${author.worksCount}"
-                        findViewById<TextView>(R.id.tv_total_words).text = "${author.totalWords}"
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is AuthorProfileUiState.Loading -> {}
+                            is AuthorProfileUiState.Success -> {
+                                viewModel.authorProfile.value?.let { author ->
+                                    binding.tvAuthorName.text = author.name
+                                    binding.tvAuthorDesc.text = author.description
+                                    binding.tvTitle.text = "${author.name} 的主页"
+                                    binding.tvFollowersCount.text = "${author.followersCount}"
+                                    binding.tvWorksCount.text = "${author.worksCount}"
+                                    binding.tvTotalWords.text = "${author.totalWords}"
 
-                        // 加载头像
-                        if (author.avatar.isNotEmpty()) {
-                            com.bumptech.glide.Glide.with(this@AuthorProfileActivity)
-                                .load(UrlUtils.normalize(author.avatar))
-                                .placeholder(R.drawable.bg_avatar_placeholder)
-                                .circleCrop()
-                                .into(findViewById(R.id.iv_author_avatar))
+                                    if (author.avatar.isNotEmpty()) {
+                                        Glide.with(this@AuthorProfileActivity)
+                                            .load(UrlUtils.normalize(author.avatar))
+                                            .placeholder(R.drawable.bg_avatar_placeholder)
+                                            .circleCrop()
+                                            .into(binding.ivAuthorAvatar)
+                                    }
+                                }
+                            }
+                            is AuthorProfileUiState.Error -> {
+                                Toast.makeText(this@AuthorProfileActivity, state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
                         }
-
-                        loadAuthorWorks()
                     }
-                } else {
-                    Toast.makeText(this@AuthorProfileActivity, "加载作者信息失败", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@AuthorProfileActivity, "网络错误", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 
-    private fun loadAuthorWorks() {
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getAuthorWorks(authorId)
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { page ->
+                launch {
+                    viewModel.isFollowing.collect { isFollowing ->
+                        updateFollowButton(isFollowing)
+                    }
+                }
+
+                launch {
+                    viewModel.works.collect { works ->
                         worksItems.clear()
-                        worksItems.addAll(page.list.map { article ->
+                        worksItems.addAll(works.map { article ->
                             BookItem(
                                 bookId = article.articleId,
                                 title = article.title,
@@ -109,72 +115,45 @@ class AuthorProfileActivity : AppCompatActivity() {
                         }
                     }
                 }
-            } catch (e: Exception) {
-                // 静默失败
             }
         }
     }
 
-    private fun setupFollowButton() {
-        val followBtn = findViewById<TextView>(R.id.tv_follow_btn)
-        followBtn.setOnClickListener {
-            lifecycleScope.launch {
-                try {
-                    val response = if (isFollowing) {
-                        RetrofitClient.apiService.unfollowAuthor(authorId)
-                    } else {
-                        RetrofitClient.apiService.followAuthor(authorId)
-                    }
-                    if (response.isSuccessful && response.body()?.code == 0) {
-                        isFollowing = !isFollowing
-                        updateFollowButton(followBtn)
-                    } else {
-                        Toast.makeText(this@AuthorProfileActivity, "操作失败", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(this@AuthorProfileActivity, "网络错误", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun updateFollowButton(followBtn: TextView) {
+    private fun updateFollowButton(isFollowing: Boolean) {
         if (isFollowing) {
-            followBtn.text = getString(R.string.author_following)
-            followBtn.setBackgroundResource(R.drawable.bg_btn_add_shelf)
-            followBtn.setTextColor(getColor(R.color.primary_red))
-            Toast.makeText(this, "已关注", Toast.LENGTH_SHORT).show()
+            binding.tvFollowBtn.text = getString(R.string.author_following)
+            binding.tvFollowBtn.setBackgroundResource(R.drawable.bg_btn_add_shelf)
+            binding.tvFollowBtn.setTextColor(getColor(R.color.primary_red))
         } else {
-            followBtn.text = getString(R.string.author_follow)
-            followBtn.setBackgroundResource(R.drawable.bg_send_btn)
-            followBtn.setTextColor(getColor(R.color.white))
-            Toast.makeText(this, "已取消关注", Toast.LENGTH_SHORT).show()
+            binding.tvFollowBtn.text = getString(R.string.author_follow)
+            binding.tvFollowBtn.setBackgroundResource(R.drawable.bg_send_btn)
+            binding.tvFollowBtn.setTextColor(getColor(R.color.white))
+        }
+
+        binding.tvFollowBtn.setOnClickListener {
+            viewModel.toggleFollow(authorId)
         }
     }
 
     private fun setupTabs() {
-        val tvDynamic = findViewById<TextView>(R.id.tv_tab_dynamic)
-        val tvWorks = findViewById<TextView>(R.id.tv_tab_works)
-        val vIndicatorDynamic = findViewById<View>(R.id.v_indicator_dynamic)
-
-        tvDynamic.setOnClickListener {
+        binding.tvTabDynamic.setOnClickListener {
             if (currentTab != 0) {
                 currentTab = 0
-                selectTab(tvDynamic, tvWorks, vIndicatorDynamic)
+                selectTab(binding.tvTabDynamic, binding.tvTabWorks, binding.vIndicatorDynamic)
                 showDynamicList()
             }
         }
 
-        tvWorks.setOnClickListener {
+        binding.tvTabWorks.setOnClickListener {
             if (currentTab != 1) {
                 currentTab = 1
-                selectTab(tvWorks, tvDynamic, vIndicatorDynamic)
+                selectTab(binding.tvTabWorks, binding.tvTabDynamic, binding.vIndicatorDynamic)
                 showWorksList()
             }
         }
     }
 
-    private fun selectTab(selected: TextView, unselected: TextView, indicator: View) {
+    private fun selectTab(selected: android.widget.TextView, unselected: android.widget.TextView, indicator: View) {
         selected.setTextColor(getColor(R.color.primary_red))
         selected.setTypeface(null, Typeface.BOLD)
         unselected.setTextColor(getColor(R.color.tab_inactive))
@@ -188,9 +167,8 @@ class AuthorProfileActivity : AppCompatActivity() {
     }
 
     private fun showDynamicList() {
-        val rv = findViewById<RecyclerView>(R.id.rv_author_content)
-        rv.layoutManager = LinearLayoutManager(this)
-        rv.adapter = FeedActivityAdapter(
+        binding.rvAuthorContent.layoutManager = LinearLayoutManager(this)
+        binding.rvAuthorContent.adapter = FeedActivityAdapter(
             items = dynamicItems,
             onItemClick = { item ->
                 Toast.makeText(this, "查看动态: ${item.activityContent}", Toast.LENGTH_SHORT).show()
@@ -205,9 +183,8 @@ class AuthorProfileActivity : AppCompatActivity() {
     }
 
     private fun showWorksList() {
-        val rv = findViewById<RecyclerView>(R.id.rv_author_content)
-        rv.layoutManager = LinearLayoutManager(this)
-        rv.adapter = BookAdapter(worksItems) { book ->
+        binding.rvAuthorContent.layoutManager = LinearLayoutManager(this)
+        binding.rvAuthorContent.adapter = BookAdapter(worksItems) { book ->
             if (book.bookId.isNotEmpty()) {
                 BookDetailActivity.start(this, book.bookId)
             }

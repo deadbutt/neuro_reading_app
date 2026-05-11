@@ -3,92 +3,92 @@ package com.example.neuro
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.neuro.api.RetrofitClient
+import com.example.neuro.databinding.ActivityCreateCenterBinding
+import com.example.neuro.viewmodel.CreateCenterUiState
+import com.example.neuro.viewmodel.CreateCenterViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class CreateCenterActivity : AppCompatActivity() {
 
-    private lateinit var rvWorks: RecyclerView
-    private lateinit var llEmpty: LinearLayout
+    private lateinit var binding: ActivityCreateCenterBinding
+    private val viewModel: CreateCenterViewModel by viewModels()
     private lateinit var worksAdapter: WorksAdapter
-    private var works = mutableListOf<WorkItem>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_create_center)
+        binding = ActivityCreateCenterBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         initViews()
         setupClickListeners()
-        loadMyWorks()
+        observeViewModel()
     }
 
     private fun initViews() {
-        rvWorks = findViewById(R.id.rv_works)
-        llEmpty = findViewById(R.id.ll_empty)
-
-        worksAdapter = WorksAdapter(works, this) {
+        worksAdapter = WorksAdapter(mutableListOf(), this) {
             updateEmptyState()
         }
-        rvWorks.layoutManager = LinearLayoutManager(this)
-        rvWorks.adapter = worksAdapter
+        binding.rvWorks.layoutManager = LinearLayoutManager(this)
+        binding.rvWorks.adapter = worksAdapter
     }
 
-    private fun setupClickListeners() {
-        findViewById<ImageView>(R.id.iv_close).setOnClickListener {
-            finish()
-        }
-
-        findViewById<LinearLayout>(R.id.ll_create_work).setOnClickListener {
-            CreateWorkActivity.start(this)
-        }
-
-        findViewById<LinearLayout>(R.id.ll_upload_file).setOnClickListener {
-            startActivity(Intent(this, UploadActivity::class.java))
-        }
-    }
-
-    private fun loadMyWorks() {
+    private fun observeViewModel() {
         lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getMyWorks()
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val list = response.body()?.data?.list ?: emptyList()
-                    works.clear()
-                    works.addAll(list.map {
-                        WorkItem(
-                            articleId = it.articleId,
-                            title = it.title,
-                            summary = it.summary,
-                            cover = it.cover,
-                            chapterCount = it.chapterCount,
-                            wordCount = it.wordCount,
-                            status = it.status
-                        )
-                    })
-                    worksAdapter.notifyDataSetChanged()
-                    updateEmptyState()
-                } else {
-                    android.util.Log.e("CreateCenter", "加载失败: ${response.body()?.message}")
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is CreateCenterUiState.Loading -> {}
+                            is CreateCenterUiState.Success -> {
+                                updateEmptyState()
+                            }
+                            is CreateCenterUiState.Error -> {
+                                Toast.makeText(this@CreateCenterActivity, state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
+                        }
+                    }
                 }
-            } catch (e: Exception) {
-                android.util.Log.e("CreateCenter", "加载异常: ${e.message}")
+
+                launch {
+                    viewModel.works.collect { works ->
+                        worksAdapter.updateData(works.toMutableList())
+                        updateEmptyState()
+                    }
+                }
             }
         }
     }
 
+    private fun setupClickListeners() {
+        binding.ivClose.setOnClickListener {
+            finish()
+        }
+
+        binding.llCreateWork.setOnClickListener {
+            CreateWorkActivity.start(this)
+        }
+
+        binding.llUploadFile.setOnClickListener {
+            startActivity(Intent(this, UploadActivity::class.java))
+        }
+    }
+
     private fun updateEmptyState() {
-        llEmpty.visibility = if (works.isEmpty()) View.VISIBLE else View.GONE
+        binding.llEmpty.visibility = if (worksAdapter.itemCount == 0) View.VISIBLE else View.GONE
     }
 
     override fun onResume() {
         super.onResume()
-        loadMyWorks()
+        viewModel.loadMyWorks()
     }
 }

@@ -96,4 +96,6 @@ class BookshelfAdapter(
         books.addAll(newBooks)
         notifyDataSetChanged()
     }
+
+    fun getData(): MutableList<ShelfItem> = books
 }

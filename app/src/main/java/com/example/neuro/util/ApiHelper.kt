@@ -5,13 +5,13 @@ import com.example.neuro.api.model.BaseResponse
 import retrofit2.Response
 
 object ApiHelper {
-    
+
     suspend fun <T> safeApiCall(
         apiCall: suspend () -> Response<BaseResponse<T>>
     ): Result<T> {
         return try {
             val response = apiCall()
-            
+
             if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
                 val data = response.body()?.data
                 if (data != null) {
@@ -27,16 +27,20 @@ object ApiHelper {
             Result.failure(e)
         }
     }
-    
+
     suspend fun <T> safeApiCallWithMessage(
         apiCall: suspend () -> Response<BaseResponse<T>>
     ): ApiResult<T> {
         return try {
             val response = apiCall()
-            
+
             if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
                 val data = response.body()?.data
-                ApiResult.Success(data!!)  // 允许data内部的字段为null
+                if (data != null) {
+                    ApiResult.Success(data)
+                } else {
+                    ApiResult.Error("数据为空")
+                }
             } else {
                 val message = response.body()?.message ?: "请求失败"
                 ApiResult.Error(message)

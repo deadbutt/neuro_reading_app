@@ -1,5 +1,6 @@
 package com.example.neuro.di
 
+import com.example.neuro.api.ApiService
 import com.example.neuro.repository.ArticleRepository
 import com.example.neuro.repository.BookRepository
 import com.example.neuro.repository.UserRepository
@@ -12,22 +13,22 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-    
+
     @Provides
     @Singleton
-    fun provideArticleRepository(): ArticleRepository {
-        return ArticleRepository()
+    fun provideArticleRepository(apiService: ApiService): ArticleRepository {
+        return ArticleRepository(apiService)
     }
-    
+
     @Provides
     @Singleton
-    fun provideUserRepository(): UserRepository {
-        return UserRepository()
+    fun provideUserRepository(apiService: ApiService): UserRepository {
+        return UserRepository(apiService)
     }
-    
+
     @Provides
     @Singleton
-    fun provideBookRepository(): BookRepository {
-        return BookRepository()
+    fun provideBookRepository(apiService: ApiService): BookRepository {
+        return BookRepository(apiService)
     }
 }

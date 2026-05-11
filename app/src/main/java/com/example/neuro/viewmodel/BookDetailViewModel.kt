@@ -3,31 +3,40 @@ package com.example.neuro.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.neuro.api.model.ArticleMeta
+import com.example.neuro.api.model.CommentResponse
 import com.example.neuro.repository.ArticleRepository
 import com.example.neuro.util.ApiResult
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class BookDetailViewModel : ViewModel() {
-    
-    private val repository = ArticleRepository()
-    
+@HiltViewModel
+class BookDetailViewModel @Inject constructor(
+    private val repository: ArticleRepository
+) : ViewModel() {
+
     private val _uiState = MutableStateFlow<BookDetailUiState>(BookDetailUiState.Idle)
     val uiState: StateFlow<BookDetailUiState> = _uiState.asStateFlow()
-    
+
     private val _article = MutableStateFlow<ArticleMeta?>(null)
     val article: StateFlow<ArticleMeta?> = _article.asStateFlow()
-    
+
+    private val _previewComments = MutableStateFlow<List<CommentResponse>>(emptyList())
+    val previewComments: StateFlow<List<CommentResponse>> = _previewComments.asStateFlow()
+
     fun loadArticleDetail(articleId: String) {
         viewModelScope.launch {
             _uiState.value = BookDetailUiState.Loading
-            
+
             when (val result = repository.getArticleDetail(articleId)) {
                 is ApiResult.Success -> {
                     _article.value = result.data
                     _uiState.value = BookDetailUiState.Success
+                    // 加载评论预览
+                    loadPreviewComments(articleId)
                 }
                 is ApiResult.Error -> {
                     _uiState.value = BookDetailUiState.Error(result.message)
@@ -38,7 +47,21 @@ class BookDetailViewModel : ViewModel() {
             }
         }
     }
-    
+
+    private fun loadPreviewComments(articleId: String) {
+        viewModelScope.launch {
+            when (val result = repository.getArticleComments(articleId, page = 1, pageSize = 3, sort = "hot")) {
+                is ApiResult.Success -> {
+                    _previewComments.value = result.data.list?.take(3) ?: emptyList()
+                }
+                is ApiResult.Error -> {
+                    _previewComments.value = emptyList()
+                }
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
     fun addToBookshelf(articleId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             when (val result = repository.addToBookshelf(articleId)) {

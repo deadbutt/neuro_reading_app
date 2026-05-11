@@ -9,7 +9,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private var currentNavIndex = 0
@@ -19,6 +21,9 @@ class MainActivity : AppCompatActivity() {
         R.id.ll_nav_reading,
         R.id.ll_nav_mine
     )
+
+    private val navIconIds = listOf(R.id.iv_nav_home, R.id.iv_nav_reading, R.id.iv_nav_mine)
+    private val navTextIds = listOf(R.id.tv_nav_home, R.id.tv_nav_reading, R.id.tv_nav_mine)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,9 +60,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun selectNavTab(index: Int) {
         currentNavIndex = index
-
-        val navIconIds = listOf(R.id.iv_nav_home, R.id.iv_nav_reading, R.id.iv_nav_mine)
-        val navTextIds = listOf(R.id.tv_nav_home, R.id.tv_nav_reading, R.id.tv_nav_mine)
 
         navIconIds.forEachIndexed { i, iconId ->
             val icon = findViewById<ImageView>(iconId)

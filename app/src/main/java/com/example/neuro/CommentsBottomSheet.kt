@@ -10,16 +10,23 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.CommentResponse
 import com.example.neuro.api.model.PostCommentRequest
+import com.example.neuro.databinding.FragmentCommentsBottomSheetBinding
+import com.example.neuro.viewmodel.CommentsUiState
+import com.example.neuro.viewmodel.CommentsViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class CommentsBottomSheet : BottomSheetDialogFragment() {
 
     companion object {
@@ -38,45 +45,35 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    private var _binding: FragmentCommentsBottomSheetBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: CommentsViewModel by viewModels()
     private lateinit var articleId: String
-    private lateinit var tvCommentCount: TextView
-    private lateinit var llEmptyState: View
-    private lateinit var tvSortHot: TextView
-    private lateinit var tvSortNew: TextView
-    private lateinit var tvSortAuthor: TextView
-    private lateinit var vIndicatorHot: View
-    private var currentSort: String = Constants.CommentSort.HOT
-    private var currentPage: Int = 1
+
     private val comments = mutableListOf<CommentItem>()
     private lateinit var adapter: CommentAdapter
-    private lateinit var rv: RecyclerView
-    private lateinit var srl: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         articleId = arguments?.getString(ARG_ARTICLE_ID) ?: ""
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_comments_bottom_sheet, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentCommentsBottomSheetBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        tvCommentCount = view.findViewById(R.id.tv_comment_count)
-        llEmptyState = view.findViewById(R.id.ll_empty_state)
-        tvSortHot = view.findViewById(R.id.tv_sort_hot)
-        tvSortNew = view.findViewById(R.id.tv_sort_new)
-        tvSortAuthor = view.findViewById(R.id.tv_sort_author)
-        vIndicatorHot = view.findViewById(R.id.v_indicator_hot)
-
         setupSortTabs()
-        setupRecyclerView(view)
-        setupSwipeRefresh(view)
-        setupSendButton(view)
+        setupRecyclerView()
+        setupSwipeRefresh()
+        setupSendButton()
+        observeViewModel()
 
-        loadComments()
+        viewModel.loadComments(articleId)
     }
 
     override fun onStart() {
@@ -87,85 +84,45 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             bottomSheet?.let { sheet ->
                 val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet)
                 behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
+                // 禁用拖动关闭，使用普通滑动
+                behavior.isDraggable = false
             }
         }
-        view?.postDelayed({
-            val etInput = view?.findViewById<EditText>(R.id.et_comment_input)
-            etInput?.requestFocus()
-            val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            imm.showSoftInput(etInput, InputMethodManager.SHOW_IMPLICIT)
-        }, 300)
     }
 
-    private fun loadComments() {
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getArticleComments(
-                    articleId = articleId,
-                    page = currentPage,
-                    sort = currentSort
-                )
-                
-                android.util.Log.d("CommentsDebug", "HTTP isSuccessful=${response.isSuccessful}, code=${response.code()}")
-                
-                if (!response.isSuccessful) {
-                    android.util.Log.d("CommentsDebug", "HTTP not successful")
-                    tvCommentCount.text = "0条"
-                    llEmptyState.visibility = View.VISIBLE
-                    srl.isRefreshing = false
-                    return@launch
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is CommentsUiState.Loading -> {}
+                            is CommentsUiState.Success -> {
+                                binding.srlComments.isRefreshing = false
+                            }
+                            is CommentsUiState.Error -> {
+                                binding.srlComments.isRefreshing = false
+                                Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
+                        }
+                    }
                 }
-                
-                val body = response.body()
-                android.util.Log.d("CommentsDebug", "body=$body")
-                
-                if (body == null) {
-                    android.util.Log.d("CommentsDebug", "body is null!")
-                    tvCommentCount.text = "0条"
-                    llEmptyState.visibility = View.VISIBLE
-                    srl.isRefreshing = false
-                    return@launch
+
+                launch {
+                    viewModel.comments.collect { newComments ->
+                        comments.clear()
+                        comments.addAll(newComments.map { it.toCommentItem() })
+                        adapter.notifyDataSetChanged()
+
+                        binding.tvCommentCount.text = "${newComments.size}条"
+                        if (newComments.isEmpty()) {
+                            binding.llEmptyState.visibility = View.VISIBLE
+                        } else {
+                            binding.llEmptyState.visibility = View.GONE
+                        }
+                    }
                 }
-                
-                android.util.Log.d("CommentsDebug", "body.code=${body.code}")
-                
-                if (body.code != 0) {
-                    android.util.Log.d("CommentsDebug", "body.code != 0")
-                    tvCommentCount.text = "0条"
-                    llEmptyState.visibility = View.VISIBLE
-                    srl.isRefreshing = false
-                    return@launch
-                }
-                
-                val paginatedData = body.data
-                val total = paginatedData?.total ?: 0
-                val commentsList = paginatedData?.list ?: emptyList()
-                
-                android.util.Log.d("CommentsDebug", "total=$total, listSize=${commentsList.size}")
-                
-                tvCommentCount.text = "${total}条"
-                
-                val newComments = commentsList.map { it.toCommentItem() }
-                
-                if (currentPage == 1) {
-                    comments.clear()
-                }
-                
-                if (newComments.isEmpty() && currentPage == 1) {
-                    llEmptyState.visibility = View.VISIBLE
-                } else {
-                    llEmptyState.visibility = View.GONE
-                    comments.addAll(newComments)
-                    adapter.notifyDataSetChanged()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                android.util.Log.e("CommentsDebug", "Exception: ${e.message}")
-                tvCommentCount.text = "0条"
-                llEmptyState.visibility = View.VISIBLE
-                Toast.makeText(requireContext(), "网络错误，请检查网络连接", Toast.LENGTH_SHORT).show()
-            } finally {
-                srl.isRefreshing = false
             }
         }
     }
@@ -192,21 +149,21 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupSortTabs() {
-        val tabs = listOf(tvSortHot, tvSortNew, tvSortAuthor)
+        val tabs = listOf(binding.tvSortHot, binding.tvSortNew, binding.tvSortAuthor)
         tabs.forEachIndexed { index, tv ->
             tv.setOnClickListener { selectSort(index) }
         }
     }
 
     private fun selectSort(index: Int) {
-        currentSort = when (index) {
+        val sort = when (index) {
             SORT_INDEX_HOT -> Constants.CommentSort.HOT
             SORT_INDEX_NEW -> Constants.CommentSort.NEW
             SORT_INDEX_AUTHOR -> Constants.CommentSort.AUTHOR
             else -> Constants.CommentSort.HOT
         }
-        currentPage = 1
-        val tabs = listOf(tvSortHot, tvSortNew, tvSortAuthor)
+
+        val tabs = listOf(binding.tvSortHot, binding.tvSortNew, binding.tvSortAuthor)
         for ((i, tv) in tabs.withIndex()) {
             if (i == index) {
                 tv.setTextColor(requireContext().getColor(R.color.primary_red))
@@ -216,12 +173,11 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 tv.setTypeface(null, Typeface.NORMAL)
             }
         }
-        loadComments()
+        viewModel.setSort(sort)
     }
 
-    private fun setupRecyclerView(view: View) {
-        rv = view.findViewById(R.id.rv_comments)
-        rv.layoutManager = LinearLayoutManager(requireContext())
+    private fun setupRecyclerView() {
+        binding.rvComments.layoutManager = LinearLayoutManager(requireContext())
         adapter = CommentAdapter(comments,
             onLikeClick = { comment, position ->
                 likeComment(comment, position)
@@ -230,49 +186,37 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 Toast.makeText(requireContext(), R.string.msg_reply_feature, Toast.LENGTH_SHORT).show()
             }
         )
-        rv.adapter = adapter
+        binding.rvComments.adapter = adapter
     }
 
     private fun likeComment(comment: CommentItem, position: Int) {
         Toast.makeText(requireContext(), R.string.msg_like_success, Toast.LENGTH_SHORT).show()
     }
 
-    private fun setupSwipeRefresh(view: View) {
-        srl = view.findViewById(R.id.srl_comments)
-        srl.setOnRefreshListener {
-            currentPage = 1
-            loadComments()
+    private fun setupSwipeRefresh() {
+        binding.srlComments.setOnRefreshListener {
+            viewModel.refreshComments(articleId)
         }
     }
 
-    private fun setupSendButton(view: View) {
-        view.findViewById<View>(R.id.btn_send).setOnClickListener {
-            val input = view.findViewById<EditText>(R.id.et_comment_input)
-            val text = input.text.toString().trim()
+    private fun setupSendButton() {
+        binding.btnSend.setOnClickListener {
+            val text = binding.etCommentInput.text.toString().trim()
             if (text.isNotEmpty()) {
-                postComment(text, input)
+                viewModel.postComment(articleId, PostCommentRequest(content = text)) { success, message ->
+                    if (success) {
+                        binding.etCommentInput.text.clear()
+                        Toast.makeText(requireContext(), R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
 
-    private fun postComment(content: String, input: EditText) {
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.postComment(
-                    articleId = articleId,
-                    request = PostCommentRequest(content = content)
-                )
-                if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
-                    Toast.makeText(requireContext(), R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()
-                    input.text.clear()
-                    currentPage = 1
-                    loadComments()
-                } else {
-                    Toast.makeText(requireContext(), R.string.error_send_failed, Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), R.string.error_network, Toast.LENGTH_SHORT).show()
-            }
-        }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

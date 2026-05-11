@@ -16,23 +16,23 @@ import javax.inject.Inject
 class SearchViewModel @Inject constructor(
     private val repository: BookRepository
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
-    
+
     private val _searchResults = MutableStateFlow<List<ArticleIndex>>(emptyList())
     val searchResults: StateFlow<List<ArticleIndex>> = _searchResults.asStateFlow()
-    
+
     fun search(keyword: String, page: Int = 1) {
         if (keyword.isBlank()) {
             _searchResults.value = emptyList()
             return
         }
-        
+
         viewModelScope.launch {
             _uiState.value = SearchUiState.Loading
-            
-            when (val result = repository.getArticles(0, page)) {
+
+            when (val result = repository.getArticles(0, page, forceRefresh = true)) {
                 is ApiResult.Success -> {
                     _searchResults.value = result.data
                     _uiState.value = SearchUiState.Success

@@ -5,24 +5,27 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Patterns
 import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import com.example.neuro.api.RetrofitClient
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.neuro.api.model.*
-import com.example.neuro.repository.UserRepository
-import com.example.neuro.util.showToast
+import com.example.neuro.databinding.ActivityLoginBinding
+import com.example.neuro.viewmodel.LoginState
+import com.example.neuro.viewmodel.UserViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 
+@AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
 
     companion object {
@@ -35,105 +38,41 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var binding: ActivityLoginBinding
+    private val viewModel: UserViewModel by viewModels()
+
     private var currentTab = 0
     private var countDownTimer: CountDownTimer? = null
     private var isCountingDown = false
-    private val repository = UserRepository()
-
-    private lateinit var llLoginForm: LinearLayout
-    private lateinit var llRegisterForm: LinearLayout
-    private lateinit var tvTabLogin: TextView
-    private lateinit var tvTabRegister: TextView
-    private lateinit var vIndicatorLogin: View
-    private lateinit var vIndicatorRegister: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         initViews()
         setupTabs()
         setupLoginForm()
         setupRegisterForm()
         setupCommonActions()
+        observeViewModel()
     }
 
     private fun initViews() {
-        llLoginForm = findViewById(R.id.ll_login_form)
-        llRegisterForm = findViewById(R.id.ll_register_form)
-        tvTabLogin = findViewById(R.id.tv_tab_login)
-        tvTabRegister = findViewById(R.id.tv_tab_register)
-        vIndicatorLogin = findViewById(R.id.v_indicator_login)
-        vIndicatorRegister = findViewById(R.id.v_indicator_register)
-
-        findViewById<View>(R.id.iv_close).setOnClickListener { finish() }
+        binding.ivClose.setOnClickListener { finish() }
     }
 
-    private fun setupTabs() {
-        tvTabLogin.setOnClickListener { switchTab(0) }
-        tvTabRegister.setOnClickListener { switchTab(1) }
-    }
-
-    private fun switchTab(index: Int) {
-        currentTab = index
-        if (index == 0) {
-            tvTabLogin.setTextColor(getColor(R.color.primary_red))
-            tvTabLogin.setTypeface(null, Typeface.BOLD)
-            vIndicatorLogin.visibility = View.VISIBLE
-
-            tvTabRegister.setTextColor(getColor(R.color.tab_inactive))
-            tvTabRegister.setTypeface(null, Typeface.NORMAL)
-            vIndicatorRegister.visibility = View.INVISIBLE
-
-            llLoginForm.visibility = View.VISIBLE
-            llRegisterForm.visibility = View.GONE
-        } else {
-            tvTabRegister.setTextColor(getColor(R.color.primary_red))
-            tvTabRegister.setTypeface(null, Typeface.BOLD)
-            vIndicatorRegister.visibility = View.VISIBLE
-
-            tvTabLogin.setTextColor(getColor(R.color.tab_inactive))
-            tvTabLogin.setTypeface(null, Typeface.NORMAL)
-            vIndicatorLogin.visibility = View.INVISIBLE
-
-            llLoginForm.visibility = View.GONE
-            llRegisterForm.visibility = View.VISIBLE
-        }
-    }
-
-    private fun setupLoginForm() {
-        val etAccount = findViewById<EditText>(R.id.et_login_account)
-        val etPassword = findViewById<EditText>(R.id.et_login_password)
-        val btnLogin = findViewById<TextView>(R.id.btn_login_submit)
-
-        btnLogin.setOnClickListener {
-            val account = etAccount.text.toString().trim()
-            val password = etPassword.text.toString().trim()
-
-            if (account.isEmpty() || !isValidAccount(account)) {
-                showToast(R.string.login_invalid_account)
-                return@setOnClickListener
-            }
-
-            if (password.length < Constants.Validation.MIN_PASSWORD_LENGTH) {
-                showToast("密码至少${Constants.Validation.MIN_PASSWORD_LENGTH}位")
-                return@setOnClickListener
-            }
-
-            btnLogin.isEnabled = false
-            btnLogin.text = "登录中…"
-
-            lifecycleScope.launch {
-                try {
-                    val request = LoginRequest(
-                        account = account,
-                        password = md5(password)
-                    )
-                    val response = RetrofitClient.apiService.login(request)
-
-                    if (response.isSuccessful && response.body()?.code == 0) {
-                        val data = response.body()?.data
-                        if (data != null) {
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.loginState.collect { state ->
+                    when (state) {
+                        is LoginState.Loading -> {
+                            binding.btnLoginSubmit.isEnabled = false
+                            binding.btnLoginSubmit.text = getString(R.string.login_loading)
+                        }
+                        is LoginState.Success -> {
+                            val data = state.data
                             UserManager.saveLoginInfo(
                                 this@LoginActivity,
                                 data.userId,
@@ -146,90 +85,119 @@ class LoginActivity : AppCompatActivity() {
                             Toast.makeText(this@LoginActivity, getString(R.string.login_success), Toast.LENGTH_SHORT).show()
                             setResult(RESULT_OK)
                             finish()
-                        } else {
-                            btnLogin.isEnabled = true
-                            btnLogin.text = getString(R.string.login_btn)
-                            Toast.makeText(this@LoginActivity, "登录失败：数据为空", Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        btnLogin.isEnabled = true
-                        btnLogin.text = getString(R.string.login_btn)
-                        val msg = response.body()?.message ?: "登录失败"
-                        Toast.makeText(this@LoginActivity, msg, Toast.LENGTH_SHORT).show()
+                        is LoginState.Error -> {
+                            binding.btnLoginSubmit.isEnabled = true
+                            binding.btnLoginSubmit.text = getString(R.string.login_btn)
+                            binding.btnRegisterSubmit.isEnabled = true
+                            binding.btnRegisterSubmit.text = getString(R.string.login_tab_register)
+                            Toast.makeText(this@LoginActivity, state.message, Toast.LENGTH_SHORT).show()
+                            viewModel.resetState()
+                        }
+                        else -> {}
                     }
-                } catch (e: Exception) {
-                    btnLogin.isEnabled = true
-                    btnLogin.text = getString(R.string.login_btn)
-                    Toast.makeText(this@LoginActivity, "网络错误：${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
+    }
 
-        findViewById<View>(R.id.tv_forgot_password).setOnClickListener {
+    private fun setupTabs() {
+        binding.tvTabLogin.setOnClickListener { switchTab(0) }
+        binding.tvTabRegister.setOnClickListener { switchTab(1) }
+    }
+
+    private fun switchTab(index: Int) {
+        currentTab = index
+        if (index == 0) {
+            binding.tvTabLogin.setTextColor(getColor(R.color.primary_red))
+            binding.tvTabLogin.setTypeface(null, Typeface.BOLD)
+            binding.vIndicatorLogin.visibility = View.VISIBLE
+
+            binding.tvTabRegister.setTextColor(getColor(R.color.tab_inactive))
+            binding.tvTabRegister.setTypeface(null, Typeface.NORMAL)
+            binding.vIndicatorRegister.visibility = View.INVISIBLE
+
+            binding.llLoginForm.visibility = View.VISIBLE
+            binding.llRegisterForm.visibility = View.GONE
+        } else {
+            binding.tvTabRegister.setTextColor(getColor(R.color.primary_red))
+            binding.tvTabRegister.setTypeface(null, Typeface.BOLD)
+            binding.vIndicatorRegister.visibility = View.VISIBLE
+
+            binding.tvTabLogin.setTextColor(getColor(R.color.tab_inactive))
+            binding.tvTabLogin.setTypeface(null, Typeface.NORMAL)
+            binding.vIndicatorLogin.visibility = View.INVISIBLE
+
+            binding.llLoginForm.visibility = View.GONE
+            binding.llRegisterForm.visibility = View.VISIBLE
+        }
+    }
+
+    private fun setupLoginForm() {
+        binding.btnLoginSubmit.setOnClickListener {
+            val account = binding.etLoginAccount.text.toString().trim()
+            val password = binding.etLoginPassword.text.toString().trim()
+
+            if (account.isEmpty() || !isValidAccount(account)) {
+                Toast.makeText(this, R.string.login_invalid_account, Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password.length < Constants.Validation.MIN_PASSWORD_LENGTH) {
+                Toast.makeText(this, "密码至少${Constants.Validation.MIN_PASSWORD_LENGTH}位", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            viewModel.login(account, md5(password))
+        }
+
+        binding.tvForgotPassword.setOnClickListener {
             ForgotPasswordActivity.start(this)
         }
     }
 
     private fun setupRegisterForm() {
-        val etAccount = findViewById<EditText>(R.id.et_register_account)
-        val etNickname = findViewById<EditText>(R.id.et_register_nickname)
-        val etCode = findViewById<EditText>(R.id.et_register_code)
-        val etPassword = findViewById<EditText>(R.id.et_register_password)
-        val etPasswordConfirm = findViewById<EditText>(R.id.et_register_password_confirm)
-        val btnSendCode = findViewById<TextView>(R.id.btn_register_send_code)
-        val btnRegister = findViewById<TextView>(R.id.btn_register_submit)
-
-        btnSendCode.setOnClickListener {
-            val account = etAccount.text.toString().trim()
+        binding.btnRegisterSendCode.setOnClickListener {
+            val account = binding.etRegisterAccount.text.toString().trim()
             if (account.isEmpty() || !isValidAccount(account)) {
                 Toast.makeText(this, getString(R.string.login_invalid_account), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 判断账号类型
             val type = if (Patterns.EMAIL_ADDRESS.matcher(account).matches()) "email" else "qq"
 
-            btnSendCode.isEnabled = false
-
-            lifecycleScope.launch {
-                try {
-                    val request = SendCodeRequest(account = account, type = type)
-                    val response = RetrofitClient.apiService.sendVerificationCode(request)
-
-                    if (response.isSuccessful && response.body()?.code == 0) {
-                        startCountDown(btnSendCode)
-                        Toast.makeText(this@LoginActivity, getString(R.string.login_code_sent), Toast.LENGTH_SHORT).show()
+            binding.btnRegisterSendCode.isEnabled = false
+            viewModel.sendVerificationCode(account, type) { success, message ->
+                runOnUiThread {
+                    if (success) {
+                        startCountDown(binding.btnRegisterSendCode)
                     } else {
-                        btnSendCode.isEnabled = true
-                        val msg = response.body()?.message ?: "发送失败"
-                        Toast.makeText(this@LoginActivity, msg, Toast.LENGTH_SHORT).show()
+                        binding.btnRegisterSendCode.isEnabled = true
                     }
-                } catch (e: Exception) {
-                    btnSendCode.isEnabled = true
-                    Toast.makeText(this@LoginActivity, "网络错误：${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
                 }
             }
         }
 
-        btnRegister.setOnClickListener {
-            val account = etAccount.text.toString().trim()
-            val nickname = etNickname.text.toString().trim()
-            val code = etCode.text.toString().trim()
-            val password = etPassword.text.toString().trim()
-            val passwordConfirm = etPasswordConfirm.text.toString().trim()
+        binding.btnRegisterSubmit.setOnClickListener {
+            val account = binding.etRegisterAccount.text.toString().trim()
+            val nickname = binding.etRegisterNickname.text.toString().trim()
+            val code = binding.etRegisterCode.text.toString().trim()
+            val password = binding.etRegisterPassword.text.toString().trim()
+            val passwordConfirm = binding.etRegisterPasswordConfirm.text.toString().trim()
 
             if (account.isEmpty() || !isValidAccount(account)) {
                 Toast.makeText(this, getString(R.string.login_invalid_account), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (code.length != 6) {
+            if (code.length != Constants.Validation.VERIFICATION_CODE_LENGTH) {
                 Toast.makeText(this, getString(R.string.login_invalid_code), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (password.length < 6) {
-                Toast.makeText(this, "密码至少6位", Toast.LENGTH_SHORT).show()
+            if (password.length < Constants.Validation.MIN_PASSWORD_LENGTH) {
+                Toast.makeText(this, "密码至少${Constants.Validation.MIN_PASSWORD_LENGTH}位", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -238,61 +206,18 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            btnRegister.isEnabled = false
-            btnRegister.text = "注册中…"
-
-            lifecycleScope.launch {
-                try {
-                    val request = RegisterRequest(
-                        account = account,
-                        code = code,
-                        password = md5(password),
-                        confirmPassword = md5(passwordConfirm),
-                        nickname = nickname.ifEmpty { null }
-                    )
-                    val response = RetrofitClient.apiService.register(request)
-
-                    if (response.isSuccessful && response.body()?.code == 0) {
-                        val data = response.body()?.data
-                        if (data != null) {
-                            UserManager.saveLoginInfo(
-                                this@LoginActivity,
-                                data.userId,
-                                data.account,
-                                data.nickname,
-                                data.avatar,
-                                data.token,
-                                data.refreshToken
-                            )
-                            Toast.makeText(this@LoginActivity, "注册成功", Toast.LENGTH_SHORT).show()
-                            setResult(RESULT_OK)
-                            finish()
-                        } else {
-                            btnRegister.isEnabled = true
-                            btnRegister.text = getString(R.string.login_tab_register)
-                            Toast.makeText(this@LoginActivity, "注册失败：数据为空", Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        btnRegister.isEnabled = true
-                        btnRegister.text = getString(R.string.login_tab_register)
-                        val msg = response.body()?.message ?: "注册失败"
-                        Toast.makeText(this@LoginActivity, msg, Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    btnRegister.isEnabled = true
-                    btnRegister.text = getString(R.string.login_tab_register)
-                    Toast.makeText(this@LoginActivity, "网络错误：${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
+            binding.btnRegisterSubmit.isEnabled = false
+            binding.btnRegisterSubmit.text = "注册中…"
+            viewModel.register(account, code, md5(password), md5(passwordConfirm), nickname.ifEmpty { null })
         }
     }
 
     private fun setupCommonActions() {
-        findViewById<View>(R.id.tv_user_agreement).setOnClickListener {
+        binding.tvUserAgreement.setOnClickListener {
             Toast.makeText(this, "用户协议", Toast.LENGTH_SHORT).show()
         }
 
-        findViewById<View>(R.id.tv_privacy_policy).setOnClickListener {
+        binding.tvPrivacyPolicy.setOnClickListener {
             Toast.makeText(this, "隐私政策", Toast.LENGTH_SHORT).show()
         }
     }

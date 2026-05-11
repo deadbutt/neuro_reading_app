@@ -7,17 +7,25 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.neuro.api.model.ArticleMeta
-import com.example.neuro.repository.ArticleRepository
+import com.example.neuro.api.model.CommentResponse
+import com.example.neuro.databinding.ActivityBookDetailBinding
 import com.example.neuro.util.UrlUtils
 import com.example.neuro.util.showToast
+import com.example.neuro.viewmodel.BookDetailUiState
+import com.example.neuro.viewmodel.BookDetailViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class BookDetailActivity : AppCompatActivity() {
 
     companion object {
@@ -30,13 +38,15 @@ class BookDetailActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var binding: ActivityBookDetailBinding
+    private val viewModel: BookDetailViewModel by viewModels()
     private lateinit var articleId: String
     private var articleMeta: ArticleMeta? = null
-    private val repository = ArticleRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_book_detail)
+        binding = ActivityBookDetailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         articleId = intent.getStringExtra(EXTRA_ARTICLE_ID) ?: ""
         if (articleId.isEmpty()) {
@@ -45,116 +55,107 @@ class BookDetailActivity : AppCompatActivity() {
             return
         }
 
-        findViewById<View>(R.id.iv_back).setOnClickListener { finish() }
-        findViewById<View>(R.id.tv_synopsis_expand).setOnClickListener { toggleSynopsis() }
-        findViewById<View>(R.id.btn_start_read).setOnClickListener { startReading() }
-        findViewById<View>(R.id.btn_add_shelf).setOnClickListener { toggleBookshelf() }
-        findViewById<View>(R.id.tv_toc_view_all).setOnClickListener { viewAllChapters() }
-        findViewById<View>(R.id.ll_comment_input).setOnClickListener { showComments() }
-        findViewById<View>(R.id.tv_reviews_view_all).setOnClickListener { showComments() }
-        findViewById<View>(R.id.iv_share).setOnClickListener { shareArticle() }
-        findViewById<View>(R.id.ll_author_info).setOnClickListener { goToAuthorProfile() }
-
-        loadArticleDetail()
+        setupListeners()
+        observeViewModel()
+        viewModel.loadArticleDetail(articleId)
     }
 
-    private fun loadArticleDetail() {
+    private fun setupListeners() {
+        binding.ivBack.setOnClickListener { finish() }
+        binding.tvSynopsisExpand.setOnClickListener { toggleSynopsis() }
+        binding.btnStartRead.setOnClickListener { startReading() }
+        binding.btnAddShelf.setOnClickListener { toggleBookshelf() }
+        binding.tvTocViewAll.setOnClickListener { viewAllChapters() }
+        binding.llCommentInput.setOnClickListener { showComments() }
+        binding.tvReviewsViewAll.setOnClickListener { showComments() }
+        binding.ivShare.setOnClickListener { shareArticle() }
+        binding.llAuthorInfo.setOnClickListener { goToAuthorProfile() }
+    }
+
+    private fun observeViewModel() {
         lifecycleScope.launch {
-            when (val result = repository.getArticleDetail(articleId)) {
-                is com.example.neuro.util.ApiResult.Success -> {
-                    articleMeta = result.data
-                    displayArticleDetail(result.data)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is BookDetailUiState.Loading -> {}
+                            is BookDetailUiState.Error -> {
+                                showToast(state.message)
+                            }
+                            else -> {}
+                        }
+                    }
                 }
-                is com.example.neuro.util.ApiResult.Error -> {
-                    showToast(result.message)
+
+                launch {
+                    viewModel.article.collect { article ->
+                        article?.let {
+                            articleMeta = it
+                            displayArticleDetail(it)
+                        }
+                    }
                 }
-                com.example.neuro.util.ApiResult.Loading -> {}
+
+                launch {
+                    viewModel.previewComments.collect { comments ->
+                        displayPreviewComments(comments)
+                    }
+                }
             }
         }
     }
 
     private fun displayArticleDetail(article: ArticleMeta) {
-        findViewById<TextView>(R.id.tv_detail_book_title).text = article.title
+        binding.tvDetailBookTitle.text = article.title
         val authorText = if (article.author.isNotBlank()) article.author else "未知作者"
-        findViewById<TextView>(R.id.tv_detail_author).text = getString(R.string.detail_author_format, authorText)
-        findViewById<TextView>(R.id.tv_detail_synopsis).text = article.summary
-        findViewById<TextView>(R.id.tv_detail_word_count).text = getString(R.string.detail_word_count_format, article.wordCount)
-        android.util.Log.d("BookDetail", "article: id=${article.articleId}, title=${article.title}, author=${article.author}")
+        binding.tvDetailAuthor.text = getString(R.string.detail_author_format, authorText)
+        binding.tvDetailSynopsis.text = article.summary
+        binding.tvDetailWordCount.text = getString(R.string.detail_word_count_format, article.wordCount)
 
-        // 加载封面
-        val ivCover = findViewById<ImageView>(R.id.iv_detail_cover)
         if (!article.cover.isNullOrBlank()) {
             Glide.with(this)
                 .load(UrlUtils.normalize(article.cover))
                 .placeholder(R.drawable.bg_book_cover_placeholder)
-                .into(ivCover)
+                .into(binding.ivDetailCover)
         }
 
-        // 动态渲染 tags
         setupTags(article.tags)
-
-        // 显示章节列表
         setupChapterList(article)
-
-        // 加载评论预览
-        loadCommentsPreview()
     }
 
-    private fun loadCommentsPreview() {
-        lifecycleScope.launch {
-            when (val result = repository.getArticleComments(articleId, page = 1, pageSize = 2)) {
-                is com.example.neuro.util.ApiResult.Success -> {
-                    val data = result.data
-                    val comments = data.list ?: emptyList()
-                    displayCommentsPreview(comments, data.total)
-                }
-                is com.example.neuro.util.ApiResult.Error -> {
-                    displayCommentsPreview(emptyList(), 0)
-                }
-                com.example.neuro.util.ApiResult.Loading -> {}
-            }
-        }
-    }
-
-    private fun displayCommentsPreview(comments: List<com.example.neuro.api.model.CommentResponse>, total: Int) {
-        val rvReviews = findViewById<RecyclerView>(R.id.rv_reviews_preview)
-        val tvEmpty = findViewById<TextView>(R.id.tv_reviews_empty)
-        val tvCount = findViewById<TextView>(R.id.tv_reviews_count)
-
-        tvCount.text = if (total > 0) {
-            getString(R.string.detail_reviews_count_format, total)
-        } else {
-            "0条"
-        }
-
+    private fun displayPreviewComments(comments: List<CommentResponse>) {
         if (comments.isEmpty()) {
-            rvReviews.visibility = View.GONE
-            tvEmpty.visibility = View.VISIBLE
-        } else {
-            rvReviews.visibility = View.VISIBLE
-            tvEmpty.visibility = View.GONE
-
-            val commentItems = comments.map { comment ->
-                CommentItem(
-                    name = comment.userName,
-                    avatarUrl = UrlUtils.normalize(comment.userAvatar),
-                    time = comment.createTime,
-                    content = comment.content,
-                    likes = formatCount(comment.likeCount),
-                    isAuthor = false
-                )
-            }
-
-            rvReviews.layoutManager = LinearLayoutManager(this)
-            rvReviews.adapter = CommentAdapter(commentItems,
-                onLikeClick = { _, _ ->
-                    showToast(R.string.msg_like_success)
-                },
-                onReplyClick = {
-                    showComments()
-                }
-            )
+            binding.rvReviewsPreview.visibility = View.GONE
+            binding.tvReviewsEmpty.visibility = View.VISIBLE
+            binding.tvReviewsCount.text = "0"
+            return
         }
+
+        binding.rvReviewsPreview.visibility = View.VISIBLE
+        binding.tvReviewsEmpty.visibility = View.GONE
+        binding.tvReviewsCount.text = "${comments.size}"
+
+        val commentItems = comments.map { it.toCommentItem() }
+        binding.rvReviewsPreview.layoutManager = LinearLayoutManager(this)
+        binding.rvReviewsPreview.adapter = CommentAdapter(commentItems,
+            onLikeClick = { _, _ ->
+                Toast.makeText(this, R.string.msg_like_success, Toast.LENGTH_SHORT).show()
+            },
+            onReplyClick = {
+                showComments()
+            }
+        )
+    }
+
+    private fun CommentResponse.toCommentItem(): CommentItem {
+        return CommentItem(
+            name = this.userName,
+            avatarUrl = UrlUtils.normalize(this.userAvatar),
+            time = this.createTime,
+            content = this.content,
+            likes = formatCount(this.likeCount),
+            isAuthor = false
+        )
     }
 
     private fun formatCount(count: Int): String {
@@ -168,15 +169,14 @@ class BookDetailActivity : AppCompatActivity() {
     }
 
     private fun setupTags(tags: List<String>?) {
-        val tagsContainer = findViewById<android.widget.LinearLayout>(R.id.ll_tags)
-        tagsContainer.removeAllViews()
+        binding.llTags.removeAllViews()
 
         if (tags.isNullOrEmpty()) {
-            findViewById<View>(R.id.ll_tags_container).visibility = View.GONE
+            binding.llTagsContainer.visibility = View.GONE
             return
         }
 
-        findViewById<View>(R.id.ll_tags_container).visibility = View.VISIBLE
+        binding.llTagsContainer.visibility = View.VISIBLE
         for (tag in tags) {
             val tv = TextView(this).apply {
                 text = tag
@@ -197,23 +197,18 @@ class BookDetailActivity : AppCompatActivity() {
                     marginEnd = 8
                 }
             }
-            tagsContainer.addView(tv)
+            binding.llTags.addView(tv)
         }
     }
 
     private fun setupChapterList(article: ArticleMeta) {
-        val rvChapters = findViewById<RecyclerView>(R.id.rv_detail_chapters)
-        rvChapters?.let {
-            val chapterItems = article.chapters.map { chapter ->
-                ChapterItem(
-                    name = chapter.title
-                )
-            }
-            it.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
-            it.adapter = ChapterAdapter(chapterItems) { _, position ->
-                val chapter = article.chapters[position]
-                ReaderActivity.start(this, article.articleId, chapter.index, article.title)
-            }
+        val chapterItems = article.chapters.map { chapter ->
+            ChapterItem(name = chapter.title)
+        }
+        binding.rvDetailChapters.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+        binding.rvDetailChapters.adapter = ChapterAdapter(chapterItems) { _, position ->
+            val chapter = article.chapters[position]
+            ReaderActivity.start(this, article.articleId, chapter.index, article.title)
         }
     }
 
@@ -229,17 +224,10 @@ class BookDetailActivity : AppCompatActivity() {
 
     private fun toggleBookshelf() {
         val article = articleMeta ?: return
-        lifecycleScope.launch {
-            when (val result = repository.addToBookshelf(articleId)) {
-                is com.example.neuro.util.ApiResult.Success -> {
-                    showToast("已加入书架")
-                }
-                is com.example.neuro.util.ApiResult.Error -> {
-                    showToast(result.message)
-                }
-                com.example.neuro.util.ApiResult.Loading -> {}
-            }
-        }
+        viewModel.addToBookshelf(articleId,
+            onSuccess = { showToast("已加入书架") },
+            onError = { showToast(it) }
+        )
     }
 
     private fun viewAllChapters() {
@@ -262,7 +250,6 @@ class BookDetailActivity : AppCompatActivity() {
 
     private fun goToAuthorProfile() {
         val article = articleMeta ?: return
-        
         if (!article.creatorId.isNullOrBlank()) {
             AuthorProfileActivity.start(this, article.creatorId)
         } else {
@@ -271,14 +258,12 @@ class BookDetailActivity : AppCompatActivity() {
     }
 
     private fun toggleSynopsis() {
-        val synopsisText = findViewById<TextView>(R.id.tv_detail_synopsis)
-        val expandBtn = findViewById<TextView>(R.id.tv_synopsis_expand)
-        if (synopsisText.maxLines == 4) {
-            synopsisText.maxLines = Int.MAX_VALUE
-            expandBtn.text = "收起"
+        if (binding.tvDetailSynopsis.maxLines == 4) {
+            binding.tvDetailSynopsis.maxLines = Int.MAX_VALUE
+            binding.tvSynopsisExpand.text = "收起"
         } else {
-            synopsisText.maxLines = 4
-            expandBtn.text = "展开"
+            binding.tvDetailSynopsis.maxLines = 4
+            binding.tvSynopsisExpand.text = "展开"
         }
     }
 }

@@ -5,17 +5,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.fragment.app.Fragment
+import com.example.neuro.databinding.FragmentHomeBinding
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class HomeFragment : Fragment() {
 
-    private lateinit var flHomeContent: FrameLayout
-    private lateinit var tvTabRecommend: TextView
-    private lateinit var tvTabHot: TextView
-    private lateinit var tvTabLatest: TextView
-    private lateinit var vIndicator: View
+    private var _binding: FragmentHomeBinding? = null
+    private val binding get() = _binding!!
+
     private var currentTab: Int = 0
     private var indicatorInitialized = false
     private var lastClickTime = 0L
@@ -23,26 +22,21 @@ class HomeFragment : Fragment() {
 
     private val fragments = mutableMapOf<Int, Fragment>()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_home, container, false)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        flHomeContent = view.findViewById(R.id.fl_home_content)
-        tvTabRecommend = view.findViewById(R.id.tv_tab_recommend)
-        tvTabHot = view.findViewById(R.id.tv_tab_hot)
-        tvTabLatest = view.findViewById(R.id.tv_tab_latest)
-        vIndicator = view.findViewById(R.id.v_indicator)
-
         setupTabs()
-        setupSearchBar(view)
+        setupSearchBar()
         switchTab(0)
     }
 
     private fun setupTabs() {
-        val tabs = listOf(tvTabRecommend, tvTabHot, tvTabLatest)
+        val tabs = listOf(binding.tvTabRecommend, binding.tvTabHot, binding.tvTabLatest)
 
         tabs.forEachIndexed { index, tv ->
             tv.setOnClickListener {
@@ -51,7 +45,7 @@ class HomeFragment : Fragment() {
                     return@setOnClickListener
                 }
                 lastClickTime = currentTime
-                
+
                 if (currentTab != index) {
                     switchTab(index)
                 }
@@ -61,7 +55,7 @@ class HomeFragment : Fragment() {
 
     private fun switchTab(index: Int) {
         currentTab = index
-        val tabs = listOf(tvTabRecommend, tvTabHot, tvTabLatest)
+        val tabs = listOf(binding.tvTabRecommend, binding.tvTabHot, binding.tvTabLatest)
 
         for ((i, tv) in tabs.withIndex()) {
             if (i == index) {
@@ -87,40 +81,40 @@ class HomeFragment : Fragment() {
         }
 
         val transaction = childFragmentManager.beginTransaction()
-        
+
         fragments.values.forEach { f ->
             if (f != fragment && f.isAdded) {
                 transaction.hide(f)
             }
         }
-        
+
         if (fragment.isAdded) {
             transaction.show(fragment)
         } else {
             transaction.add(R.id.fl_home_content, fragment)
         }
-        
+
         transaction.commitAllowingStateLoss()
     }
 
     private fun moveIndicatorToTab(index: Int) {
-        val tabs = listOf(tvTabRecommend, tvTabHot, tvTabLatest)
+        val tabs = listOf(binding.tvTabRecommend, binding.tvTabHot, binding.tvTabLatest)
         val targetTab = tabs.getOrNull(index) ?: return
 
-        vIndicator.post {
-            if (!isAdded || vIndicator.parent == null) return@post
+        binding.vIndicator.post {
+            if (!isAdded || binding.vIndicator.parent == null) return@post
 
             val tabWidth = targetTab.width.toFloat()
-            val indicatorWidth = vIndicator.width.toFloat()
+            val indicatorWidth = binding.vIndicator.width.toFloat()
             val tabLeft = targetTab.x
 
             val targetX = tabLeft + (tabWidth - indicatorWidth) / 2f
 
             if (!indicatorInitialized) {
-                vIndicator.translationX = targetX
+                binding.vIndicator.translationX = targetX
                 indicatorInitialized = true
             } else {
-                vIndicator.animate()
+                binding.vIndicator.animate()
                     .translationX(targetX)
                     .setDuration(200)
                     .start()
@@ -128,9 +122,14 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setupSearchBar(view: View) {
-        view.findViewById<View>(R.id.et_search).setOnClickListener {
+    private fun setupSearchBar() {
+        binding.etSearch.setOnClickListener {
             (requireActivity() as MainActivity).navigateToSearch()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
