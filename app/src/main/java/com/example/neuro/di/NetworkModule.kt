@@ -3,6 +3,7 @@ package com.example.neuro.di
 import com.example.neuro.BuildConfig
 import com.example.neuro.api.AuthInterceptor
 import com.example.neuro.api.ApiService
+import com.example.neuro.api.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,13 +43,21 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideTokenAuthenticator(): TokenAuthenticator {
+        return TokenAuthenticator()
+    }
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
-        authInterceptor: AuthInterceptor
+        authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)

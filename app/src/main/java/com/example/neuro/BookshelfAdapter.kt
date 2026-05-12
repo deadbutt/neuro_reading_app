@@ -18,13 +18,14 @@ data class ShelfItem(
     val progress: Int,
     val coverUrl: String = "",
     val lastReadChapter: String = "",
-    var isSelected: Boolean = false
+    val isSelected: Boolean = false
 )
 
 class BookshelfAdapter(
-    private val books: MutableList<ShelfItem>,
-    private val isEditMode: Boolean = false,
-    private val onItemClick: (ShelfItem, Int) -> Unit = { _, _ -> }
+    private var items: List<ShelfItem> = emptyList(),
+    private var isEditMode: Boolean = false,
+    private val onItemClick: (ShelfItem, Int) -> Unit = { _, _ -> },
+    private val onCheckboxClick: ((ShelfItem, Int) -> Unit)? = null
 ) : RecyclerView.Adapter<BookshelfAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -43,14 +44,13 @@ class BookshelfAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val book = books[position]
+        val book = items[position]
         holder.tvTitle.text = book.title
         holder.tvAuthor.text = book.author
         holder.tvTag.text = "· ${book.tag}"
         holder.pbProgress.progress = book.progress
         holder.tvProgress.text = "${book.progress}%"
 
-        // 加载封面
         if (book.coverUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context)
                 .load(UrlUtils.normalize(book.coverUrl))
@@ -67,11 +67,7 @@ class BookshelfAdapter(
                 else R.drawable.ic_shelf_checkbox_unchecked
             )
             holder.ivCheckbox.setOnClickListener {
-                book.isSelected = !book.isSelected
-                holder.ivCheckbox.setImageResource(
-                    if (book.isSelected) R.drawable.ic_shelf_checkbox_checked
-                    else R.drawable.ic_shelf_checkbox_unchecked
-                )
+                onCheckboxClick?.invoke(book, position)
             }
         } else {
             holder.ivCheckbox.visibility = View.GONE
@@ -80,22 +76,11 @@ class BookshelfAdapter(
         holder.itemView.setOnClickListener { onItemClick(book, position) }
     }
 
-    override fun getItemCount(): Int = books.size
+    override fun getItemCount(): Int = items.size
 
-    fun getSelectedBooks(): List<ShelfItem> = books.filter { it.isSelected }
-
-    fun toggleSelectAll(): Boolean {
-        val allSelected = books.all { it.isSelected }
-        books.forEach { it.isSelected = !allSelected }
-        notifyDataSetChanged()
-        return !allSelected
-    }
-
-    fun updateData(newBooks: List<ShelfItem>) {
-        books.clear()
-        books.addAll(newBooks)
+    fun updateData(newItems: List<ShelfItem>, editMode: Boolean) {
+        items = newItems
+        isEditMode = editMode
         notifyDataSetChanged()
     }
-
-    fun getData(): MutableList<ShelfItem> = books
 }

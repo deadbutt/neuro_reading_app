@@ -18,9 +18,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.neuro.api.model.CommentResponse
-import com.example.neuro.api.model.PostCommentRequest
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.FragmentCommentsBottomSheetBinding
-import com.example.neuro.viewmodel.CommentsUiState
 import com.example.neuro.viewmodel.CommentsViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -96,11 +95,11 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is CommentsUiState.Loading -> {}
-                            is CommentsUiState.Success -> {
+                            is UiState.Loading -> {}
+                            is UiState.Success -> {
                                 binding.srlComments.isRefreshing = false
                             }
-                            is CommentsUiState.Error -> {
+                            is UiState.Error -> {
                                 binding.srlComments.isRefreshing = false
                                 Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                             }
@@ -203,7 +202,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         binding.btnSend.setOnClickListener {
             val text = binding.etCommentInput.text.toString().trim()
             if (text.isNotEmpty()) {
-                viewModel.postComment(articleId, PostCommentRequest(content = text)) { success, message ->
+                viewModel.postComment(articleId, text) { success, message ->
                     if (success) {
                         binding.etCommentInput.text.clear()
                         Toast.makeText(requireContext(), R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()

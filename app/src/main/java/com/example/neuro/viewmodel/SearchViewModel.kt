@@ -2,10 +2,13 @@ package com.example.neuro.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.neuro.api.model.ArticleIndex
+import com.example.neuro.BookItem
+import com.example.neuro.base.UiState
 import com.example.neuro.repository.BookRepository
 import com.example.neuro.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,38 +20,71 @@ class SearchViewModel @Inject constructor(
     private val repository: BookRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<SearchUiState>(SearchUiState.Idle)
-    val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
-    private val _searchResults = MutableStateFlow<List<ArticleIndex>>(emptyList())
-    val searchResults: StateFlow<List<ArticleIndex>> = _searchResults.asStateFlow()
+    private val _searchResults = MutableStateFlow<List<BookItem>>(emptyList())
+    val searchResults: StateFlow<List<BookItem>> = _searchResults.asStateFlow()
 
-    fun search(keyword: String, page: Int = 1) {
+    private val _history = MutableStateFlow<List<String>>(emptyList())
+    val history: StateFlow<List<String>> = _history.asStateFlow()
+
+    private var searchJob: Job? = null
+
+    fun search(keyword: String) {
         if (keyword.isBlank()) {
             _searchResults.value = emptyList()
+            _uiState.value = UiState.Idle
             return
         }
 
-        viewModelScope.launch {
-            _uiState.value = SearchUiState.Loading
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(300)
+            _uiState.value = UiState.Loading
 
-            when (val result = repository.getArticles(0, page, forceRefresh = true)) {
+            when (val result = repository.searchArticles(keyword)) {
                 is ApiResult.Success -> {
-                    _searchResults.value = result.data
-                    _uiState.value = SearchUiState.Success
+                    val items = result.data.map { article ->
+                        BookItem(
+                            bookId = article.articleId,
+                            title = article.title,
+                            author = article.author,
+                            desc = article.summary,
+                            coverUrl = article.cover ?: ""
+                        )
+                    }
+                    _searchResults.value = items
+                    _uiState.value = if (items.isEmpty()) UiState.Empty else UiState.Success
                 }
                 is ApiResult.Error -> {
-                    _uiState.value = SearchUiState.Error(result.message)
+                    _uiState.value = UiState.Error(result.message)
                 }
                 ApiResult.Loading -> {}
             }
         }
     }
-}
 
-sealed class SearchUiState {
-    object Idle : SearchUiState()
-    object Loading : SearchUiState()
-    object Success : SearchUiState()
-    data class Error(val message: String) : SearchUiState()
+    fun updateHistory(query: String) {
+        if (query.isBlank()) return
+        val list = _history.value.toMutableList()
+        list.remove(query)
+        list.add(0, query)
+        if (list.size > MAX_HISTORY_SIZE) {
+            list.subList(MAX_HISTORY_SIZE, list.size).clear()
+        }
+        _history.value = list
+    }
+
+    fun clearHistory() {
+        _history.value = emptyList()
+    }
+
+    fun setHistory(history: List<String>) {
+        _history.value = history
+    }
+
+    companion object {
+        const val MAX_HISTORY_SIZE = 10
+    }
 }

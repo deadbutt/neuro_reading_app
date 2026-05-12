@@ -18,10 +18,11 @@ data class WorkItem(
     val articleId: String,
     val title: String,
     val summary: String,
-    val cover: String?,
+    val cover: String,
+    val status: String,
     val chapterCount: Int,
     val wordCount: Int,
-    val status: String?
+    val lastUpdateTime: String
 )
 
 class WorksAdapter(
@@ -57,11 +58,11 @@ class WorksAdapter(
         holder.tvStatus.text = when (work.status) {
             "draft" -> "草稿"
             "published" -> "已发布"
-            else -> "未知"
+            else -> work.status
         }
         holder.tvSummary.text = work.summary.ifBlank { "暂无简介" }
 
-        if (!work.cover.isNullOrBlank()) {
+        if (work.cover.isNotBlank()) {
             holder.tvCoverPlaceholder.visibility = View.GONE
             holder.ivCover.visibility = View.VISIBLE
             Glide.with(context)

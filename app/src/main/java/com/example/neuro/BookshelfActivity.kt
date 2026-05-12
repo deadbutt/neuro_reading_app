@@ -6,13 +6,19 @@ import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.neuro.api.RetrofitClient
+import com.example.neuro.viewmodel.BookshelfUiState
+import com.example.neuro.viewmodel.BookshelfViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class BookshelfActivity : AppCompatActivity() {
 
     companion object {
@@ -21,14 +27,14 @@ class BookshelfActivity : AppCompatActivity() {
         }
     }
 
+    private val viewModel: BookshelfViewModel by viewModels()
+
     private var isEditMode = false
-    private lateinit var adapter: BookshelfAdapter
     private lateinit var tvEdit: TextView
     private lateinit var llEditBar: View
     private lateinit var llEmpty: View
     private lateinit var rv: RecyclerView
-
-    private val books = mutableListOf<ShelfItem>()
+    private lateinit var adapter: BookshelfAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,50 +52,52 @@ class BookshelfActivity : AppCompatActivity() {
         setupRecyclerView()
         setupEditBar()
         setupTabs()
+        observeViewModel()
 
-        loadBookshelf()
+        viewModel.loadBookshelf()
     }
 
     override fun onResume() {
         super.onResume()
-        loadBookshelf()
+        viewModel.loadBookshelf()
     }
 
-    private fun loadBookshelf() {
+    private fun observeViewModel() {
         lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.getBookshelf()
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { page ->
-                        val list = page.list ?: emptyList()
-                        val shelfItems = list.map { item ->
-                            ShelfItem(
-                                bookId = item.articleId,
-                                title = item.title,
-                                author = item.author,
-                                tag = "书架",
-                                progress = item.progress,
-                                coverUrl = item.cover,
-                                lastReadChapter = item.lastReadChapter
-                            )
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is BookshelfUiState.Error -> {
+                                Toast.makeText(this@BookshelfActivity, state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            is BookshelfUiState.Empty -> {
+                                updateEmptyState(true)
+                            }
+                            is BookshelfUiState.Success -> {
+                                updateEmptyState(false)
+                            }
+                            is BookshelfUiState.RemoveResult -> {
+                                Toast.makeText(this@BookshelfActivity,
+                                    "已删除 ${state.successCount} 本书", Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
                         }
-                        books.clear()
-                        books.addAll(shelfItems)
-                        adapter.updateData(books)
-                        updateEmptyState()
                     }
-                } else {
-                    Toast.makeText(this@BookshelfActivity, "加载书架失败", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@BookshelfActivity, "网络错误", Toast.LENGTH_SHORT).show()
+
+                launch {
+                    viewModel.books.collect { books ->
+                        adapter.updateData(books, isEditMode)
+                        updateEmptyState(books.isEmpty())
+                    }
+                }
             }
         }
     }
 
-    private fun updateEmptyState() {
-        if (books.isEmpty()) {
+    private fun updateEmptyState(isEmpty: Boolean) {
+        if (isEmpty) {
             llEmpty.visibility = View.VISIBLE
             rv.visibility = View.GONE
         } else {
@@ -100,7 +108,7 @@ class BookshelfActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         rv.layoutManager = LinearLayoutManager(this)
-        adapter = BookshelfAdapter(books, isEditMode = false) { book, _ ->
+        adapter = BookshelfAdapter(isEditMode = false) { book, _ ->
             if (isEditMode) return@BookshelfAdapter
             if (book.bookId.isNotEmpty()) {
                 BookDetailActivity.start(this, book.bookId)
@@ -113,46 +121,21 @@ class BookshelfActivity : AppCompatActivity() {
         isEditMode = !isEditMode
         tvEdit.text = if (isEditMode) getString(R.string.shelf_done) else getString(R.string.shelf_edit)
         llEditBar.visibility = if (isEditMode) View.VISIBLE else View.GONE
-        adapter = BookshelfAdapter(books, isEditMode = isEditMode) { book, _ ->
-            if (isEditMode) return@BookshelfAdapter
-            if (book.bookId.isNotEmpty()) {
-                BookDetailActivity.start(this, book.bookId)
-            }
-        }
-        rv.adapter = adapter
+        adapter.updateData(viewModel.books.value, isEditMode)
     }
 
     private fun setupEditBar() {
         findViewById<View>(R.id.ll_select_all).setOnClickListener {
-            adapter.toggleSelectAll()
+            val allSelected = viewModel.toggleSelectAll()
+            adapter.updateData(viewModel.books.value, isEditMode)
         }
 
         findViewById<View>(R.id.btn_shelf_delete).setOnClickListener {
-            val selected = adapter.getSelectedBooks()
+            val selected = viewModel.getSelectedBooks()
             if (selected.isEmpty()) {
                 Toast.makeText(this, "请先选择要删除的书籍", Toast.LENGTH_SHORT).show()
             } else {
-                removeSelectedFromBookshelf(selected)
-            }
-        }
-    }
-
-    private fun removeSelectedFromBookshelf(selected: List<ShelfItem>) {
-        lifecycleScope.launch {
-            try {
-                var successCount = 0
-                for (book in selected) {
-                    val response = RetrofitClient.apiService.removeFromBookshelf(book.bookId)
-                    if (response.isSuccessful && response.body()?.code == 0) {
-                        successCount++
-                    }
-                }
-                books.removeAll(selected)
-                adapter.updateData(books)
-                updateEmptyState()
-                Toast.makeText(this@BookshelfActivity, "已删除 ${successCount} 本书", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(this@BookshelfActivity, "删除失败", Toast.LENGTH_SHORT).show()
+                viewModel.removeBooks(selected)
             }
         }
     }

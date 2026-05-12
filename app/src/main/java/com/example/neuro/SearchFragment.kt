@@ -17,8 +17,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.FragmentSearchBinding
-import com.example.neuro.viewmodel.SearchUiState
 import com.example.neuro.viewmodel.SearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -67,13 +67,10 @@ class SearchFragment : Fragment() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is SearchUiState.Loading -> {
+                            is UiState.Loading -> {
                                 binding.llSearchEmpty.visibility = View.GONE
                             }
-                            is SearchUiState.Success -> {
-                                // Handled by searchResults collection
-                            }
-                            is SearchUiState.Error -> {
+                            is UiState.Error -> {
                                 Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                             }
                             else -> {}
@@ -84,14 +81,7 @@ class SearchFragment : Fragment() {
                 launch {
                     viewModel.searchResults.collect { articles ->
                         searchResults.clear()
-                        searchResults.addAll(articles.map { article ->
-                            BookItem(
-                                bookId = article.articleId,
-                                title = article.title,
-                                author = article.author,
-                                desc = article.summary
-                            )
-                        })
+                        searchResults.addAll(articles)
                         adapter.notifyDataSetChanged()
                         updateSearchResultVisibility()
                     }
@@ -138,6 +128,7 @@ class SearchFragment : Fragment() {
         binding.llSearchHistory.visibility = View.GONE
         binding.llSearchHot.visibility = View.GONE
         binding.llSearchResult.visibility = View.VISIBLE
+        viewModel.updateHistory(query)
         viewModel.search(query)
     }
 
@@ -149,17 +140,12 @@ class SearchFragment : Fragment() {
 
     private fun setupHistoryActions() {
         binding.llClearHistory.setOnClickListener {
-            clearHistory()
+            viewModel.clearHistory()
+            binding.llSearchHistory.visibility = View.GONE
+            Toast.makeText(requireContext(), R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
         }
 
         loadHistoryTags()
-    }
-
-    private fun clearHistory() {
-        val prefs = requireContext().getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
-        prefs.edit().remove(KEY_HISTORY).apply()
-        binding.llSearchHistory.visibility = View.GONE
-        Toast.makeText(requireContext(), R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
     }
 
     private fun loadHistoryTags() {

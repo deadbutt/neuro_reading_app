@@ -50,7 +50,7 @@ class BookshelfFragment : Fragment() {
 
     private fun setupRecyclerView() {
         binding.rvShelf.layoutManager = LinearLayoutManager(requireContext())
-        adapter = BookshelfAdapter(mutableListOf(), isEditMode = false) { book, _ ->
+        adapter = BookshelfAdapter(isEditMode = false) { book, _ ->
             if (isEditMode) return@BookshelfAdapter
             if (book.bookId.isNotEmpty()) {
                 BookDetailActivity.start(requireContext(), book.bookId)
@@ -70,6 +70,10 @@ class BookshelfFragment : Fragment() {
                             is BookshelfUiState.Error -> {
                                 Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                             }
+                            is BookshelfUiState.RemoveResult -> {
+                                Toast.makeText(requireContext(),
+                                    "已删除 ${state.successCount} 本书", Toast.LENGTH_SHORT).show()
+                            }
                             else -> {}
                         }
                     }
@@ -77,7 +81,7 @@ class BookshelfFragment : Fragment() {
 
                 launch {
                     viewModel.books.collect { items ->
-                        adapter.updateData(items.toMutableList())
+                        adapter.updateData(items, isEditMode)
                         updateEmptyState(items.isEmpty())
                     }
                 }
@@ -99,26 +103,21 @@ class BookshelfFragment : Fragment() {
         isEditMode = !isEditMode
         binding.tvShelfEdit.text = if (isEditMode) "完成" else "编辑"
         binding.llShelfEditBar.visibility = if (isEditMode) View.VISIBLE else View.GONE
-        adapter = BookshelfAdapter(adapter.getData(), isEditMode = isEditMode) { book, _ ->
-            if (isEditMode) return@BookshelfAdapter
-            if (book.bookId.isNotEmpty()) {
-                BookDetailActivity.start(requireContext(), book.bookId)
-            }
-        }
-        binding.rvShelf.adapter = adapter
+        adapter.updateData(viewModel.books.value, isEditMode)
     }
 
     private fun setupEditBar() {
         binding.llSelectAll.setOnClickListener {
-            adapter.toggleSelectAll()
+            val allSelected = viewModel.toggleSelectAll()
+            adapter.updateData(viewModel.books.value, isEditMode)
         }
 
         binding.btnShelfDelete.setOnClickListener {
-            val selected = adapter.getSelectedBooks()
+            val selected = viewModel.getSelectedBooks()
             if (selected.isEmpty()) {
                 Toast.makeText(requireContext(), "请先选择要删除的书籍", Toast.LENGTH_SHORT).show()
             } else {
-                viewModel.removeBooks(selected.map { it.bookId })
+                viewModel.removeBooks(selected)
             }
         }
     }

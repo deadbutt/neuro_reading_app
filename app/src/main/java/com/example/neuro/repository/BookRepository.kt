@@ -65,6 +65,16 @@ class BookRepository @Inject constructor(
         cache.clear()
     }
 
+    suspend fun searchArticles(
+        keyword: String,
+        page: Int = 1,
+        pageSize: Int = 20
+    ): ApiResult<List<ArticleIndex>> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.searchArticles(keyword = keyword, page = page, pageSize = pageSize)
+        }
+    }
+
     fun normalizeUrl(url: String?): String {
         return UrlUtils.normalize(url)
     }

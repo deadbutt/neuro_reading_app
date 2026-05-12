@@ -13,8 +13,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.FragmentBookListBinding
-import com.example.neuro.viewmodel.BookListUiState
 import com.example.neuro.viewmodel.BookListViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -116,16 +116,16 @@ class BookListFragment : Fragment() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is BookListUiState.Loading -> {
+                            is UiState.Loading -> {
                                 if (!binding.srlBookList.isRefreshing) {
                                     binding.pbLoadMore.visibility = View.VISIBLE
                                 }
                             }
-                            is BookListUiState.Success -> {
+                            is UiState.Success -> {
                                 binding.srlBookList.isRefreshing = false
                                 binding.pbLoadMore.visibility = View.GONE
                             }
-                            is BookListUiState.Error -> {
+                            is UiState.Error -> {
                                 binding.srlBookList.isRefreshing = false
                                 binding.pbLoadMore.visibility = View.GONE
                                 if (isAdded) {

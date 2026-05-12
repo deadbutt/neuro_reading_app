@@ -17,10 +17,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.neuro.api.model.ArticleMeta
 import com.example.neuro.api.model.CommentResponse
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.ActivityBookDetailBinding
 import com.example.neuro.util.UrlUtils
 import com.example.neuro.util.showToast
-import com.example.neuro.viewmodel.BookDetailUiState
 import com.example.neuro.viewmodel.BookDetailViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -78,8 +78,8 @@ class BookDetailActivity : AppCompatActivity() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is BookDetailUiState.Loading -> {}
-                            is BookDetailUiState.Error -> {
+                            is UiState.Loading -> {}
+                            is UiState.Error -> {
                                 showToast(state.message)
                             }
                             else -> {}

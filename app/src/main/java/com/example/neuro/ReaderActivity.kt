@@ -18,8 +18,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.neuro.api.model.ArticleChapterMeta
 import com.example.neuro.api.model.ChapterContentResponse
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.ActivityReaderBinding
-import com.example.neuro.viewmodel.ReaderUiState
 import com.example.neuro.viewmodel.ReaderViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -56,6 +56,9 @@ class ReaderActivity : AppCompatActivity() {
     private val loadedChapters = mutableMapOf<Int, ChapterContentResponse>()
     private var isLoadingNext = false
     private var isLoadingPrev = false
+    private var pendingNextChapterIndex: Int? = null
+    private var pendingPrevChapterIndex: Int? = null
+    private var isFirstLoad = true
 
     private lateinit var paragraphAdapter: ParagraphAdapter
 
@@ -82,7 +85,7 @@ class ReaderActivity : AppCompatActivity() {
         setupBrightnessControl()
         observeViewModel()
 
-        viewModel.loadChapter(articleId, currentChapterIndex)
+        viewModel.loadArticleMeta(articleId)
     }
 
     private fun observeViewModel() {
@@ -91,15 +94,8 @@ class ReaderActivity : AppCompatActivity() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is ReaderUiState.Loading -> {}
-                            is ReaderUiState.Success -> {
-                                viewModel.chapterContent.value?.let {
-                                    loadedChapters[currentChapterIndex] = it
-                                    displayAllChapters()
-                                    updateTopTitle()
-                                }
-                            }
-                            is ReaderUiState.Error -> {
+                            is UiState.Error -> {
+                                onChapterLoadFailed()
                                 Toast.makeText(this@ReaderActivity, state.message, Toast.LENGTH_SHORT).show()
                             }
                             else -> {}
@@ -109,15 +105,60 @@ class ReaderActivity : AppCompatActivity() {
 
                 launch {
                     viewModel.chapterContent.collect { content ->
-                        content?.let {
-                            loadedChapters[currentChapterIndex] = it
-                            displayAllChapters()
-                            updateTopTitle()
+                        content ?: return@collect
+
+                        val nextIdx = pendingNextChapterIndex
+                        val prevIdx = pendingPrevChapterIndex
+
+                        when {
+                            nextIdx != null -> {
+                                paragraphAdapter.removeLoading()
+                                loadedChapters[nextIdx] = content
+                                appendChapterToAdapter(content, nextIdx)
+                                pendingNextChapterIndex = null
+                                isLoadingNext = false
+                            }
+                            prevIdx != null -> {
+                                paragraphAdapter.removeLoading()
+                                loadedChapters[prevIdx] = content
+                                val prevItemCount = chapterToItems(content, prevIdx).size
+                                prependChapterToAdapter(content, prevIdx)
+                                binding.rvReaderBody.post {
+                                    val layoutManager = binding.rvReaderBody.layoutManager as? LinearLayoutManager
+                                    val currentFirst = layoutManager?.findFirstVisibleItemPosition() ?: 0
+                                    binding.rvReaderBody.scrollToPosition(currentFirst + prevItemCount)
+                                }
+                                pendingPrevChapterIndex = null
+                                isLoadingPrev = false
+                            }
+                            else -> {
+                                loadedChapters[currentChapterIndex] = content
+                                displayAllChapters()
+                                updateTopTitle()
+                            }
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.chapters.collect { chapterList ->
+                        if (chapterList.isNotEmpty()) {
+                            chapters = chapterList
+                            setupChapterList()
+                            viewModel.loadChapter(articleId, currentChapterIndex)
                         }
                     }
                 }
             }
         }
+    }
+
+    private fun onChapterLoadFailed() {
+        paragraphAdapter.removeLoading()
+        isLoadingNext = false
+        isLoadingPrev = false
+        pendingNextChapterIndex = null
+        pendingPrevChapterIndex = null
     }
 
     private fun setupReaderRecyclerView() {
@@ -189,41 +230,26 @@ class ReaderActivity : AppCompatActivity() {
         return paragraphAdapter.currentItems.lastOrNull { it is ReaderItem.ChapterHeader }?.chapterId ?: ""
     }
 
-    private fun loadChapterContent(chapterIndex: Int) {
-        viewModel.loadChapter(articleId, chapterIndex)
-    }
-
     private fun loadNextChapter(chapterIndex: Int) {
         if (isLoadingNext) return
         isLoadingNext = true
+        pendingNextChapterIndex = chapterIndex
 
         val lastChapterId = findLastChapterId()
         paragraphAdapter.appendItems(listOf(ReaderItem.Loading(lastChapterId)))
 
-        lifecycleScope.launch {
-            try {
-                // Note: In full refactor, this would use ViewModel
-                // For now, keeping direct call to maintain functionality
-                isLoadingNext = false
-                paragraphAdapter.removeLoading()
-            } catch (e: Exception) {
-                paragraphAdapter.removeLoading()
-                isLoadingNext = false
-            }
-        }
+        viewModel.loadChapter(articleId, chapterIndex)
     }
 
     private fun loadPrevChapter(chapterIndex: Int) {
         if (isLoadingPrev) return
         isLoadingPrev = true
+        pendingPrevChapterIndex = chapterIndex
 
-        lifecycleScope.launch {
-            try {
-                isLoadingPrev = false
-            } catch (e: Exception) {
-                isLoadingPrev = false
-            }
-        }
+        val firstChapterId = findFirstChapterId()
+        paragraphAdapter.prependItems(listOf(ReaderItem.Loading(firstChapterId)))
+
+        viewModel.loadChapter(articleId, chapterIndex)
     }
 
     private fun chapterToItems(content: ChapterContentResponse, chapterIndex: Int): List<ReaderItem> {
@@ -310,6 +336,8 @@ class ReaderActivity : AppCompatActivity() {
 
     private fun jumpToChapter(chapterIndex: Int) {
         loadedChapters.clear()
+        pendingNextChapterIndex = null
+        pendingPrevChapterIndex = null
         currentChapterIndex = chapterIndex
         viewModel.loadChapter(articleId, chapterIndex)
         updateChapterListSelection(chapterIndex)

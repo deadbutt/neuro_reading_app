@@ -219,7 +219,7 @@ class UploadActivity : AppCompatActivity() {
 
                 val response = RetrofitClient.apiService.uploadCover(body)
                 if (response.isSuccessful && response.body()?.code == 0) {
-                    coverUrl = response.body()?.data?.url
+                    coverUrl = response.body()?.data?.url?.let { sanitizeUrl(it) }
                     updateCoverDisplay()
                     Toast.makeText(this@UploadActivity, "封面上传成功", Toast.LENGTH_SHORT).show()
                 } else {
@@ -295,7 +295,7 @@ class UploadActivity : AppCompatActivity() {
                 val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
                 val titlePart = title.ifBlank { null }?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val coverPart = coverUrl?.toRequestBody("text/plain".toMediaTypeOrNull())
+                val coverPart = coverUrl?.let { sanitizeUrl(it) }?.toRequestBody("text/plain".toMediaTypeOrNull())
 
                 val response = if (isDocx) {
                     RetrofitClient.apiService.uploadDocx(
@@ -364,5 +364,17 @@ class UploadActivity : AppCompatActivity() {
         tvUpload.isEnabled = true
         tvUpload.text = "上传作品"
         progressBar.visibility = View.GONE
+    }
+
+    private fun sanitizeUrl(url: String): String {
+        return url.trim()
+            .removeSurrounding("`")
+            .removeSurrounding("\"")
+            .removeSurrounding("'")
+            .removeSurrounding("(")
+            .removeSurrounding(")")
+            .removeSurrounding("[")
+            .removeSurrounding("]")
+            .trim()
     }
 }

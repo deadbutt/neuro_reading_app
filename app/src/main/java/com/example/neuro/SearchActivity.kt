@@ -2,22 +2,29 @@ package com.example.neuro
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.neuro.api.RetrofitClient
+import com.example.neuro.base.UiState
+import com.example.neuro.viewmodel.SearchViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class SearchActivity : AppCompatActivity() {
 
-    private val searchResults = mutableListOf<BookItem>()
+    private val viewModel: SearchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,8 +32,40 @@ class SearchActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.tv_search_cancel).setOnClickListener { finish() }
 
+        viewModel.setHistory(loadHistory())
+        observeViewModel()
         setupSearchInput()
         setupHistoryActions()
+    }
+
+    private fun observeViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.uiState.collect { state ->
+                        when (state) {
+                            is UiState.Error -> {
+                                Toast.makeText(this@SearchActivity, state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.searchResults.collect { results ->
+                        showSearchResults(results)
+                    }
+                }
+
+                launch {
+                    viewModel.history.collect { history ->
+                        saveHistoryToPrefs(history)
+                        renderHistoryTags(history)
+                    }
+                }
+            }
+        }
     }
 
     private fun setupSearchInput() {
@@ -39,7 +78,12 @@ class SearchActivity : AppCompatActivity() {
                 ivClear.visibility = if (hasText) View.VISIBLE else View.GONE
 
                 if (hasText) {
-                    performSearch(s.toString())
+                    val query = s.toString()
+                    findViewById<View>(R.id.ll_search_history).visibility = View.GONE
+                    findViewById<View>(R.id.ll_search_hot).visibility = View.GONE
+                    findViewById<View>(R.id.ll_search_result).visibility = View.VISIBLE
+                    viewModel.updateHistory(query)
+                    viewModel.search(query)
                 } else {
                     showInitialState()
                 }
@@ -51,50 +95,18 @@ class SearchActivity : AppCompatActivity() {
         ivClear.setOnClickListener { etSearch.text.clear() }
     }
 
-    private fun performSearch(query: String) {
-        saveSearchHistory(query)
-        findViewById<View>(R.id.ll_search_history).visibility = View.GONE
-        findViewById<View>(R.id.ll_search_hot).visibility = View.GONE
-        findViewById<View>(R.id.ll_search_result).visibility = View.VISIBLE
-
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.apiService.searchArticles(keyword = query)
-                if (response.isSuccessful && response.body()?.code == 0) {
-                    val data = response.body()?.data
-                    data?.let { articles ->
-                        searchResults.clear()
-                        searchResults.addAll(articles.map { article ->
-                            BookItem(
-                                bookId = article.articleId,
-                                title = article.title,
-                                author = article.author,
-                                desc = article.summary
-                            )
-                        })
-                        showSearchResults()
-                    }
-                } else {
-                    Toast.makeText(this@SearchActivity, "搜索失败", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this@SearchActivity, "网络错误", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun showSearchResults() {
+    private fun showSearchResults(results: List<BookItem>) {
         val resultRv = findViewById<RecyclerView>(R.id.rv_search_result)
         val emptyView = findViewById<View>(R.id.ll_search_empty)
 
-        if (searchResults.isEmpty()) {
+        if (results.isEmpty()) {
             emptyView.visibility = View.VISIBLE
             resultRv.visibility = View.GONE
         } else {
             emptyView.visibility = View.GONE
             resultRv.visibility = View.VISIBLE
             resultRv.layoutManager = LinearLayoutManager(this)
-            resultRv.adapter = BookAdapter(searchResults) { book ->
+            resultRv.adapter = BookAdapter(results) { book ->
                 if (book.bookId.isNotEmpty()) {
                     BookDetailActivity.start(this, book.bookId)
                 }
@@ -110,28 +122,22 @@ class SearchActivity : AppCompatActivity() {
 
     private fun setupHistoryActions() {
         findViewById<View>(R.id.ll_clear_history).setOnClickListener {
-            clearHistory()
+            viewModel.clearHistory()
         }
-
-        loadHistoryTags()
     }
 
-    private fun clearHistory() {
-        findViewById<View>(R.id.ll_search_history).visibility = View.GONE
-        Toast.makeText(this, R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun loadHistoryTags() {
+    private fun renderHistoryTags(history: List<String>) {
         val tagsContainer = findViewById<android.widget.LinearLayout>(R.id.ll_history_tags)
-        tagsContainer.removeAllViews()
+        val historyContainer = findViewById<View>(R.id.ll_search_history)
 
-        val historyTags = getSearchHistory()
-        if (historyTags.isEmpty()) {
-            findViewById<View>(R.id.ll_search_history).visibility = View.GONE
+        if (history.isEmpty()) {
+            historyContainer.visibility = View.GONE
             return
         }
+        historyContainer.visibility = View.VISIBLE
 
-        historyTags.forEach { tag ->
+        tagsContainer.removeAllViews()
+        history.forEach { tag ->
             val tv = android.widget.TextView(this).apply {
                 text = tag
                 setTextColor(getColor(R.color.tab_inactive))
@@ -153,26 +159,23 @@ class SearchActivity : AppCompatActivity() {
         }
     }
 
-    private fun getSearchHistory(): List<String> {
-        val prefs = getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
-        val historyString = prefs.getString(KEY_HISTORY, "") ?: ""
-        return if (historyString.isEmpty()) emptyList() else historyString.split(",").filter { it.isNotEmpty() }
+    private fun loadHistory(): List<String> {
+        val historyString = getPrefs().getString(KEY_HISTORY, "") ?: ""
+        return if (historyString.isEmpty()) emptyList()
+        else historyString.split(",").filter { it.isNotEmpty() }
     }
 
-    private fun saveSearchHistory(query: String) {
-        if (query.isBlank()) return
-        val prefs = getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
-        val history = getSearchHistory().toMutableList()
-        history.remove(query)
-        history.add(0, query)
-        if (history.size > MAX_HISTORY_SIZE) history.subList(MAX_HISTORY_SIZE, history.size).clear()
-        prefs.edit().putString(KEY_HISTORY, history.joinToString(",")).apply()
+    private fun saveHistoryToPrefs(history: List<String>) {
+        getPrefs().edit().putString(KEY_HISTORY, history.joinToString(",")).apply()
+    }
+
+    private fun getPrefs(): SharedPreferences {
+        return getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
     }
 
     companion object {
         private const val PREFS_SEARCH = "search_prefs"
         private const val KEY_HISTORY = "search_history"
-        private const val MAX_HISTORY_SIZE = 10
 
         fun start(context: Context) {
             context.startActivity(Intent(context, SearchActivity::class.java))

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.neuro.api.model.ArticleMeta
 import com.example.neuro.api.model.CommentResponse
+import com.example.neuro.base.UiState
 import com.example.neuro.repository.ArticleRepository
 import com.example.neuro.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,8 +19,8 @@ class BookDetailViewModel @Inject constructor(
     private val repository: ArticleRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<BookDetailUiState>(BookDetailUiState.Idle)
-    val uiState: StateFlow<BookDetailUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     private val _article = MutableStateFlow<ArticleMeta?>(null)
     val article: StateFlow<ArticleMeta?> = _article.asStateFlow()
@@ -29,20 +30,19 @@ class BookDetailViewModel @Inject constructor(
 
     fun loadArticleDetail(articleId: String) {
         viewModelScope.launch {
-            _uiState.value = BookDetailUiState.Loading
+            _uiState.value = UiState.Loading
 
             when (val result = repository.getArticleDetail(articleId)) {
                 is ApiResult.Success -> {
                     _article.value = result.data
-                    _uiState.value = BookDetailUiState.Success
-                    // 加载评论预览
+                    _uiState.value = UiState.Success
                     loadPreviewComments(articleId)
                 }
                 is ApiResult.Error -> {
-                    _uiState.value = BookDetailUiState.Error(result.message)
+                    _uiState.value = UiState.Error(result.message)
                 }
                 ApiResult.Loading -> {
-                    _uiState.value = BookDetailUiState.Loading
+                    _uiState.value = UiState.Loading
                 }
             }
         }
@@ -75,11 +75,4 @@ class BookDetailViewModel @Inject constructor(
             }
         }
     }
-}
-
-sealed class BookDetailUiState {
-    object Idle : BookDetailUiState()
-    object Loading : BookDetailUiState()
-    object Success : BookDetailUiState()
-    data class Error(val message: String) : BookDetailUiState()
 }

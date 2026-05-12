@@ -10,8 +10,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.ActivityCreateCenterBinding
-import com.example.neuro.viewmodel.CreateCenterUiState
 import com.example.neuro.viewmodel.CreateCenterViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -47,11 +47,11 @@ class CreateCenterActivity : AppCompatActivity() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is CreateCenterUiState.Loading -> {}
-                            is CreateCenterUiState.Success -> {
+                            is UiState.Loading -> {}
+                            is UiState.Success -> {
                                 updateEmptyState()
                             }
-                            is CreateCenterUiState.Error -> {
+                            is UiState.Error -> {
                                 Toast.makeText(this@CreateCenterActivity, state.message, Toast.LENGTH_SHORT).show()
                             }
                             else -> {}

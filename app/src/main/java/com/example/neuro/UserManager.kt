@@ -84,6 +84,15 @@ object UserManager {
         return getPrefs(context).getString(KEY_REFRESH_TOKEN, null)
     }
 
+    fun updateToken(context: Context, token: String, refreshToken: String) {
+        getPrefs(context).edit().apply {
+            putString(KEY_TOKEN, token)
+            putString(KEY_REFRESH_TOKEN, refreshToken)
+            putLong(KEY_LOGIN_TIME, System.currentTimeMillis())
+            apply()
+        }
+    }
+
     fun clearLoginInfo(context: Context) {
         getPrefs(context).edit().apply {
             remove(KEY_USER_ID)
