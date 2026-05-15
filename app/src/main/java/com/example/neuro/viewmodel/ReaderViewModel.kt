@@ -26,14 +26,21 @@ class ReaderViewModel @Inject constructor(
     private val _chapterContent = MutableStateFlow<ChapterContentResponse?>(null)
     val chapterContent: StateFlow<ChapterContentResponse?> = _chapterContent.asStateFlow()
 
+    private val _allChapterContents = MutableStateFlow<Map<Int, ChapterContentResponse>>(emptyMap())
+    val allChapterContents: StateFlow<Map<Int, ChapterContentResponse>> = _allChapterContents.asStateFlow()
+
     private val _chapters = MutableStateFlow<List<ArticleChapterMeta>>(emptyList())
     val chapters: StateFlow<List<ArticleChapterMeta>> = _chapters.asStateFlow()
+
+    private val _totalWordCount = MutableStateFlow(0)
+    val totalWordCount: StateFlow<Int> = _totalWordCount.asStateFlow()
 
     fun loadArticleMeta(articleId: String) {
         viewModelScope.launch {
             when (val result = repository.getArticleDetail(articleId)) {
                 is ApiResult.Success -> {
                     _chapters.value = result.data.chapters
+                    _totalWordCount.value = result.data.wordCount
                 }
                 is ApiResult.Error -> {}
                 ApiResult.Loading -> {}
@@ -55,6 +62,37 @@ class ReaderViewModel @Inject constructor(
                 }
                 ApiResult.Loading -> {}
             }
+        }
+    }
+
+    fun loadAllChapters(articleId: String) {
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+
+            val chapterList = _chapters.value
+            val allContents = mutableMapOf<Int, ChapterContentResponse>()
+
+            for ((index, chapter) in chapterList.withIndex()) {
+                when (val result = repository.getChapterContent(articleId, chapter.index)) {
+                    is ApiResult.Success -> {
+                        allContents[index] = result.data
+                    }
+                    is ApiResult.Error -> {
+                        _uiState.value = UiState.Error(result.message)
+                        return@launch
+                    }
+                    ApiResult.Loading -> {}
+                }
+            }
+
+            _allChapterContents.value = allContents
+            _uiState.value = UiState.Success
+        }
+    }
+
+    fun saveProgress(articleId: String, chapterIndex: Int, progress: Int, position: Int) {
+        viewModelScope.launch {
+            repository.updateReadingProgress(articleId, chapterIndex, progress, position)
         }
     }
 }

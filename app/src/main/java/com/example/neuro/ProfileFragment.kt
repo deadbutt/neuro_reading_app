@@ -20,6 +20,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
+import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.UpdateProfileRequest
 import com.example.neuro.databinding.FragmentProfileBinding
 import com.example.neuro.util.UrlUtils
@@ -98,8 +99,15 @@ class ProfileFragment : Fragment() {
         binding.llMenuCreator.setOnClickListener {
             startActivity(Intent(requireContext(), CreateCenterActivity::class.java))
         }
+        binding.llShelfCard.setOnClickListener {
+            if (checkLogin()) {
+                BookshelfActivity.start(requireContext())
+            }
+        }
         binding.llMenuHistory.setOnClickListener {
-            if (checkLogin()) Toast.makeText(requireContext(), "阅读历史", Toast.LENGTH_SHORT).show()
+            if (checkLogin()) {
+                ReadingHistoryActivity.start(requireContext())
+            }
         }
         binding.llMenuCache.setOnClickListener {
             Toast.makeText(requireContext(), "离线缓存", Toast.LENGTH_SHORT).show()
@@ -248,9 +256,16 @@ class ProfileFragment : Fragment() {
                 val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
                 val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
-                // Note: Upload still uses direct Retrofit call as it's multipart
-                // In a full refactor, this would also go through Repository + ViewModel
-                Toast.makeText(requireContext(), "头像上传功能需要后端配合", Toast.LENGTH_SHORT).show()
+                val response = RetrofitClient.apiService.uploadAvatar(body)
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    response.body()?.data?.url?.let { avatarUrl ->
+                        UserManager.updateProfile(requireContext(), avatar = avatarUrl)
+                    }
+                    Toast.makeText(requireContext(), "头像上传成功", Toast.LENGTH_SHORT).show()
+                } else {
+                    val msg = response.body()?.message ?: "上传失败"
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
+                }
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "上传错误：${e.message}", Toast.LENGTH_SHORT).show()
             }

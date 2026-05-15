@@ -43,7 +43,7 @@ class BookRepository @Inject constructor(
             apiService.getArticles(page = page, pageSize = pageSize)
         }) {
             is ApiResult.Success -> {
-                val articles = result.data.list ?: emptyList()
+                val articles = result.data.safeList()
                 putCache(cacheKey, articles)
                 ApiResult.Success(articles)
             }

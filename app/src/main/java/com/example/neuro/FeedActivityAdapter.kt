@@ -6,12 +6,19 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.neuro.util.UrlUtils
 
 data class FeedActivityItem(
+    val feedId: String = "",
+    val authorId: String = "",
     val authorName: String,
+    val authorAvatar: String = "",
     val authorAvatarResId: Int = 0,
     val publishTime: String,
     val activityContent: String,
+    val bookId: String? = null,
+    val bookCover: String = "",
     val bookCoverResId: Int = 0,
     val chapterPreview: String,
     val likeCount: String,
@@ -48,6 +55,16 @@ class FeedActivityAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
 
+        if (item.authorAvatar.isNotEmpty()) {
+            Glide.with(holder.itemView.context)
+                .load(UrlUtils.normalize(item.authorAvatar))
+                .placeholder(R.drawable.bg_avatar_placeholder)
+                .circleCrop()
+                .into(holder.ivAuthorAvatar)
+        } else if (item.authorAvatarResId != 0) {
+            holder.ivAuthorAvatar.setImageResource(item.authorAvatarResId)
+        }
+
         holder.tvAuthorName.text = item.authorName
         holder.tvPublishTime.text = item.publishTime
         holder.tvActivityContent.text = item.activityContent
@@ -55,21 +72,21 @@ class FeedActivityAdapter(
         holder.tvLikeCount.text = item.likeCount
         holder.tvCommentCount.text = item.commentCount
 
-        if (item.authorAvatarResId != 0) {
-            holder.ivAuthorAvatar.setImageResource(item.authorAvatarResId)
-        }
-        if (item.bookCoverResId != 0) {
+        if (item.bookCover.isNotEmpty()) {
+            holder.ivBookCover.visibility = View.VISIBLE
+            Glide.with(holder.itemView.context)
+                .load(UrlUtils.normalize(item.bookCover))
+                .placeholder(R.drawable.bg_feed_cover)
+                .into(holder.ivBookCover)
+        } else if (item.bookCoverResId != 0) {
+            holder.ivBookCover.visibility = View.VISIBLE
             holder.ivBookCover.setImageResource(item.bookCoverResId)
         }
 
         updateLikeIcon(holder, item.isLiked)
 
         holder.itemView.setOnClickListener { onItemClick(item) }
-        holder.ivLike.setOnClickListener {
-            item.isLiked = !item.isLiked
-            updateLikeIcon(holder, item.isLiked)
-            onLikeClick(item, position)
-        }
+        holder.ivLike.setOnClickListener { onLikeClick(item, position) }
         holder.ivComment.setOnClickListener { onCommentClick(item) }
     }
 

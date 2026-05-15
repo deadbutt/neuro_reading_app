@@ -30,6 +30,7 @@ data class BookshelfItemResponse(
     val lastReadChapter: String,
     val lastReadTime: String,
     val progress: Int,        // 阅读进度 0-100
+    val chapterIndex: Int = 0, // 当前章节索引
     val isFinished: Boolean
 )
 
@@ -38,4 +39,19 @@ data class UpdateProgressRequest(
     val chapterIndex: Int,    // 当前章节索引（从0开始）
     val progress: Int,        // 0-100
     val position: Int         // 当前阅读位置（字符偏移）
+)
+
+// 阅读历史响应
+data class ReadingHistoryResponse(
+    val historyId: String,
+    val articleId: String,
+    val title: String,
+    val author: String,
+    val cover: String,
+    val chapterIndex: Int,
+    val chapterTitle: String,
+    val progress: Int,        // 阅读进度 0-100
+    val position: Int,        // 当前阅读位置（字符偏移）
+    val readTime: Int,        // 本次阅读时长（分钟）
+    val lastReadTime: String
 )

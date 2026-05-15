@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/ll_shelf_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/padding_horizontal"
+    android:paddingEnd="@dimen/padding_horizontal"
+    android:paddingTop="@dimen/shelf_item_padding_vertical"
+    android:paddingBottom="@dimen/shelf_item_padding_vertical">
+
+    <ImageView
+        android:id="@+id/iv_shelf_cover"
+        android:layout_width="@dimen/shelf_cover_width"
+        android:layout_height="@dimen/shelf_cover_height"
+        android:background="@drawable/bg_shelf_cover_placeholder"
+        android:contentDescription="@string/shelf_title"
+        android:scaleType="centerCrop" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/item_spacing"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_shelf_book_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/book_title_size"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_shelf_author"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/book_author_size" />
+
+            <View
+                android:layout_width="0.5dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="8dp"
+                android:background="@color/divider" />
+
+            <TextView
+                android:id="@+id/tv_shelf_tag"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/book_author_size" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="进度"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/text_micro" />
+
+            <ProgressBar
+                android:id="@+id/pb_shelf_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/shelf_progress_bar_height"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="60"
+                android:progressDrawable="@drawable/bg_shelf_progress" />
+
+            <TextView
+                android:id="@+id/tv_shelf_progress_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="60%"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/text_micro" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_last_read_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_hint"
+            android:textSize="@dimen/text_micro" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_delete"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginStart="8dp"
+        android:contentDescription="删除"
+        android:padding="6dp"
+        android:src="@drawable/ic_delete" />
+
+</LinearLayout>

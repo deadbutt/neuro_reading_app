@@ -7,6 +7,7 @@ import com.example.neuro.api.model.ChapterContentResponse
 import com.example.neuro.api.model.CommentResponse
 import com.example.neuro.api.model.PaginatedResponse
 import com.example.neuro.api.model.PostCommentRequest
+import com.example.neuro.api.model.UpdateProgressRequest
 import com.example.neuro.util.ApiHelper
 import com.example.neuro.util.ApiResult
 import javax.inject.Inject
@@ -67,6 +68,24 @@ class ArticleRepository @Inject constructor(
     suspend fun postComment(articleId: String, request: PostCommentRequest): ApiResult<CommentResponse> {
         return ApiHelper.safeApiCallWithMessage {
             apiService.postComment(articleId, request)
+        }
+    }
+
+    suspend fun updateReadingProgress(articleId: String, chapterIndex: Int, progress: Int, position: Int): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.updateReadingProgress(articleId, UpdateProgressRequest(chapterIndex, progress, position))
+        }
+    }
+
+    suspend fun likeComment(commentId: String): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.likeComment(commentId)
+        }
+    }
+
+    suspend fun unlikeComment(commentId: String): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.unlikeComment(commentId)
         }
     }
 }

@@ -3,6 +3,7 @@ package com.example.neuro.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.neuro.api.model.LoginResponse
+import com.example.neuro.api.model.ReadingHistoryResponse
 import com.example.neuro.api.model.UserProfileResponse
 import com.example.neuro.repository.UserRepository
 import com.example.neuro.util.ApiResult
@@ -23,6 +24,12 @@ class UserViewModel @Inject constructor(
 
     private val _userProfile = MutableStateFlow<UserProfileResponse?>(null)
     val userProfile: StateFlow<UserProfileResponse?> = _userProfile.asStateFlow()
+
+    private val _readingHistory = MutableStateFlow<List<ReadingHistoryResponse>>(emptyList())
+    val readingHistory: StateFlow<List<ReadingHistoryResponse>> = _readingHistory.asStateFlow()
+
+    private val _historyLoading = MutableStateFlow(false)
+    val historyLoading: StateFlow<Boolean> = _historyLoading.asStateFlow()
 
     fun login(account: String, password: String) {
         viewModelScope.launch {
@@ -88,6 +95,52 @@ class UserViewModel @Inject constructor(
                 }
                 is ApiResult.Error -> {
                     // 静默失败
+                }
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
+    fun getReadingHistory() {
+        viewModelScope.launch {
+            _historyLoading.value = true
+            when (val result = repository.getReadingHistory()) {
+                is ApiResult.Success -> {
+                    _readingHistory.value = result.data?.safeList() ?: emptyList()
+                }
+                is ApiResult.Error -> {
+                    // 静默失败
+                }
+                ApiResult.Loading -> {}
+            }
+            _historyLoading.value = false
+        }
+    }
+
+    fun deleteReadingHistory(historyId: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            when (val result = repository.deleteReadingHistory(historyId)) {
+                is ApiResult.Success -> {
+                    _readingHistory.value = _readingHistory.value.filter { it.historyId != historyId }
+                    onResult(true, "删除成功")
+                }
+                is ApiResult.Error -> {
+                    onResult(false, result.message)
+                }
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
+    fun clearReadingHistory(onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            when (val result = repository.clearReadingHistory()) {
+                is ApiResult.Success -> {
+                    _readingHistory.value = emptyList()
+                    onResult(true, "已清空")
+                }
+                is ApiResult.Error -> {
+                    onResult(false, result.message)
                 }
                 ApiResult.Loading -> {}
             }

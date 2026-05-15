@@ -85,4 +85,34 @@ class UserRepository @Inject constructor(
             apiService.getFollowingList(page, pageSize)
         }
     }
+
+    suspend fun getAuthorProfile(authorId: String): ApiResult<AuthorProfileResponse> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getAuthorProfile(authorId)
+        }
+    }
+
+    suspend fun getAuthorWorks(authorId: String, page: Int = 1, pageSize: Int = 20): ApiResult<PaginatedResponse<ArticleIndex>> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getAuthorWorks(authorId, page, pageSize)
+        }
+    }
+
+    suspend fun getReadingHistory(page: Int = 1, pageSize: Int = 20): ApiResult<PaginatedResponse<ReadingHistoryResponse>> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getReadingHistory(page, pageSize)
+        }
+    }
+
+    suspend fun deleteReadingHistory(historyId: String): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.deleteReadingHistory(historyId)
+        }
+    }
+
+    suspend fun clearReadingHistory(): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.clearReadingHistory()
+        }
+    }
 }

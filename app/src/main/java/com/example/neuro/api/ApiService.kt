@@ -44,6 +44,18 @@ interface ApiService {
         @Query("pageSize") pageSize: Int = 20
     ): Response<BaseResponse<PaginatedResponse<AuthorResponse>>>
 
+    @GET("api/v1/user/reading-history")
+    suspend fun getReadingHistory(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20
+    ): Response<BaseResponse<PaginatedResponse<ReadingHistoryResponse>>>
+
+    @DELETE("api/v1/user/reading-history/{historyId}")
+    suspend fun deleteReadingHistory(@Path("historyId") historyId: String): Response<BaseResponse<Unit>>
+
+    @DELETE("api/v1/user/reading-history")
+    suspend fun clearReadingHistory(): Response<BaseResponse<Unit>>
+
     // ==================== 书架相关 ====================
 
     @GET("api/v1/bookshelf")

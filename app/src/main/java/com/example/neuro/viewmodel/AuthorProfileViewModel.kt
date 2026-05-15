@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.neuro.api.model.ArticleIndex
 import com.example.neuro.api.model.AuthorProfileResponse
-import com.example.neuro.repository.ArticleRepository
+import com.example.neuro.base.UiState
 import com.example.neuro.repository.UserRepository
 import com.example.neuro.util.ApiResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,12 +16,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthorProfileViewModel @Inject constructor(
-    private val articleRepository: ArticleRepository,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<AuthorProfileUiState>(AuthorProfileUiState.Idle)
-    val uiState: StateFlow<AuthorProfileUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
+    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     private val _authorProfile = MutableStateFlow<AuthorProfileResponse?>(null)
     val authorProfile: StateFlow<AuthorProfileResponse?> = _authorProfile.asStateFlow()
@@ -34,11 +33,36 @@ class AuthorProfileViewModel @Inject constructor(
 
     fun loadAuthorProfile(authorId: String) {
         viewModelScope.launch {
-            _uiState.value = AuthorProfileUiState.Loading
+            _uiState.value = UiState.Loading
 
-            // Note: This would need a proper repository method
-            // For now, using placeholder to maintain functionality
-            _uiState.value = AuthorProfileUiState.Success
+            when (val result = userRepository.getAuthorProfile(authorId)) {
+                is ApiResult.Success -> {
+                    _authorProfile.value = result.data
+                    _isFollowing.value = result.data.isFollowing
+                    _uiState.value = UiState.Success
+                }
+                is ApiResult.Error -> {
+                    _uiState.value = UiState.Error(result.message)
+                }
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
+    fun loadWorks(authorId: String, page: Int = 1) {
+        viewModelScope.launch {
+            when (val result = userRepository.getAuthorWorks(authorId, page)) {
+                is ApiResult.Success -> {
+                    val list = result.data.safeList()
+                    if (page == 1) {
+                        _works.value = list
+                    } else {
+                        _works.value = _works.value + list
+                    }
+                }
+                is ApiResult.Error -> {}
+                ApiResult.Loading -> {}
+            }
         }
     }
 
@@ -60,11 +84,4 @@ class AuthorProfileViewModel @Inject constructor(
             }
         }
     }
-}
-
-sealed class AuthorProfileUiState {
-    object Idle : AuthorProfileUiState()
-    object Loading : AuthorProfileUiState()
-    object Success : AuthorProfileUiState()
-    data class Error(val message: String) : AuthorProfileUiState()
 }

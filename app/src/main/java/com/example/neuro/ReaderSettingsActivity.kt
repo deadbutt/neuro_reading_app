@@ -14,9 +14,18 @@ import androidx.appcompat.app.AppCompatActivity
 class ReaderSettingsActivity : AppCompatActivity() {
 
     companion object {
+        private const val PREFS_NAME = "reader_settings"
+        private const val KEY_FONT_SIZE = "font_size"
+        private const val KEY_BACKGROUND = "background"
+        private const val KEY_FONT_ID = "font_id"
+        private const val KEY_FLIP_ID = "flip_id"
+
         fun start(context: Context) {
             context.startActivity(Intent(context, ReaderSettingsActivity::class.java))
         }
+
+        fun getFontSize(context: Context): Float = 14f + context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getInt(KEY_FONT_SIZE, 3) * 1f
+        fun getBackgroundId(context: Context): Int = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getInt(KEY_BACKGROUND, R.id.fl_bg_day)
     }
 
     private lateinit var tvPreview: TextView
@@ -33,11 +42,39 @@ class ReaderSettingsActivity : AppCompatActivity() {
         findViewById<View>(R.id.iv_settings_back).setOnClickListener { finish() }
         findViewById<View>(R.id.tv_reset_default).setOnClickListener { resetDefaults() }
 
+        loadSettings()
         setupFontSelection()
         setupFontSize()
         setupBackgroundColor()
         setupFlipMode()
         setupSwitches()
+    }
+
+    private fun loadSettings() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        currentFontId = prefs.getInt(KEY_FONT_ID, R.id.ll_font_default)
+        currentBgId = prefs.getInt(KEY_BACKGROUND, R.id.fl_bg_day)
+        currentFlipId = prefs.getInt(KEY_FLIP_ID, R.id.tv_flip_sim)
+
+        val fontSizeProgress = prefs.getInt(KEY_FONT_SIZE, 3)
+        findViewById<SeekBar>(R.id.sb_font_size).progress = fontSizeProgress
+        updatePreviewSize(fontSizeProgress)
+
+        updateFontUI(currentFontId, true)
+        selectBackground(currentBgId)
+        selectFlip(currentFlipId)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().apply {
+            putInt(KEY_FONT_SIZE, findViewById<SeekBar>(R.id.sb_font_size).progress)
+            putInt(KEY_FONT_ID, currentFontId)
+            putInt(KEY_BACKGROUND, currentBgId)
+            putInt(KEY_FLIP_ID, currentFlipId)
+            apply()
+        }
     }
 
     private fun setupFontSelection() {

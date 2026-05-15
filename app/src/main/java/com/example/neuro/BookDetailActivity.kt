@@ -208,7 +208,14 @@ class BookDetailActivity : AppCompatActivity() {
         binding.rvDetailChapters.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
         binding.rvDetailChapters.adapter = ChapterAdapter(chapterItems) { _, position ->
             val chapter = article.chapters[position]
-            ReaderActivity.start(this, article.articleId, chapter.index, article.title)
+            viewModel.addToBookshelf(articleId,
+                onSuccess = {
+                    ReaderActivity.start(this, article.articleId, chapter.index, article.title)
+                },
+                onError = {
+                    ReaderActivity.start(this, article.articleId, chapter.index, article.title)
+                }
+            )
         }
     }
 
@@ -216,7 +223,14 @@ class BookDetailActivity : AppCompatActivity() {
         val article = articleMeta ?: return
         val firstChapter = article.chapters.firstOrNull()
         if (firstChapter != null) {
-            ReaderActivity.start(this, article.articleId, firstChapter.index, article.title)
+            viewModel.addToBookshelf(articleId,
+                onSuccess = {
+                    ReaderActivity.start(this, article.articleId, firstChapter.index, article.title)
+                },
+                onError = {
+                    ReaderActivity.start(this, article.articleId, firstChapter.index, article.title)
+                }
+            )
         } else {
             showToast("暂无章节")
         }
@@ -250,10 +264,15 @@ class BookDetailActivity : AppCompatActivity() {
 
     private fun goToAuthorProfile() {
         val article = articleMeta ?: return
-        if (!article.creatorId.isNullOrBlank()) {
-            AuthorProfileActivity.start(this, article.creatorId)
+        val id = article.creatorId
+        if (!id.isNullOrBlank()) {
+            if (id.startsWith("u_") || id.startsWith("a_") || id.startsWith("cr_")) {
+                AuthorProfileActivity.start(this, id)
+            } else {
+                showToast("该作者暂无主页")
+            }
         } else {
-            showToast("作者信息暂不可用")
+            showToast("该作者暂无主页")
         }
     }
 

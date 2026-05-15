@@ -189,7 +189,8 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun likeComment(comment: CommentItem, position: Int) {
-        Toast.makeText(requireContext(), R.string.msg_like_success, Toast.LENGTH_SHORT).show()
+        val responseComment = viewModel.comments.value.getOrNull(position) ?: return
+        viewModel.toggleLike(responseComment.commentId, responseComment.isLiked)
     }
 
     private fun setupSwipeRefresh() {

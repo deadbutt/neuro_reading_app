@@ -52,7 +52,7 @@ class BookDetailViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = repository.getArticleComments(articleId, page = 1, pageSize = 3, sort = "hot")) {
                 is ApiResult.Success -> {
-                    _previewComments.value = result.data.list?.take(3) ?: emptyList()
+                    _previewComments.value = result.data.safeList().take(3)
                 }
                 is ApiResult.Error -> {
                     _previewComments.value = emptyList()

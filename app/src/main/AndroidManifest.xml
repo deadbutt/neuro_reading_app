@@ -45,6 +45,7 @@
         <activity android:name=".AuthorProfileActivity" android:theme="@style/Theme.TomatoRead" />
         <activity android:name=".LoginActivity" android:theme="@style/Theme.TomatoRead" />
         <activity android:name=".ForgotPasswordActivity" android:theme="@style/Theme.TomatoRead" />
+        <activity android:name=".ReadingHistoryActivity" android:theme="@style/Theme.TomatoRead" />
 
         <!-- 创作中心 -->
         <activity android:name=".CreateCenterActivity" android:theme="@style/Theme.TomatoRead" />

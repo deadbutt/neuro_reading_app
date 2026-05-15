@@ -111,7 +111,7 @@ class BookshelfActivity : AppCompatActivity() {
         adapter = BookshelfAdapter(isEditMode = false) { book, _ ->
             if (isEditMode) return@BookshelfAdapter
             if (book.bookId.isNotEmpty()) {
-                BookDetailActivity.start(this, book.bookId)
+                ReaderActivity.start(this, book.bookId, book.chapterIndex, book.title)
             }
         }
         rv.adapter = adapter

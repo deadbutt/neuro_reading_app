@@ -18,6 +18,8 @@ data class ShelfItem(
     val progress: Int,
     val coverUrl: String = "",
     val lastReadChapter: String = "",
+    val chapterIndex: Int = 0,
+    val isFinished: Boolean = false,
     val isSelected: Boolean = false
 )
 
@@ -47,7 +49,12 @@ class BookshelfAdapter(
         val book = items[position]
         holder.tvTitle.text = book.title
         holder.tvAuthor.text = book.author
-        holder.tvTag.text = "· ${book.tag}"
+
+        if (book.lastReadChapter.isNotEmpty()) {
+            holder.tvTag.text = "上次读到: ${book.lastReadChapter}"
+        } else {
+            holder.tvTag.text = "· ${book.tag}"
+        }
         holder.pbProgress.progress = book.progress
         holder.tvProgress.text = "${book.progress}%"
 

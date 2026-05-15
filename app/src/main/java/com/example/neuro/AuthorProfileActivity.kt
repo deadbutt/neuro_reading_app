@@ -13,9 +13,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.example.neuro.base.UiState
 import com.example.neuro.databinding.ActivityAuthorProfileBinding
 import com.example.neuro.util.UrlUtils
-import com.example.neuro.viewmodel.AuthorProfileUiState
 import com.example.neuro.viewmodel.AuthorProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -58,6 +58,7 @@ class AuthorProfileActivity : AppCompatActivity() {
         setupTabs()
         observeViewModel()
         viewModel.loadAuthorProfile(authorId)
+        viewModel.loadWorks(authorId)
     }
 
     private fun observeViewModel() {
@@ -66,8 +67,8 @@ class AuthorProfileActivity : AppCompatActivity() {
                 launch {
                     viewModel.uiState.collect { state ->
                         when (state) {
-                            is AuthorProfileUiState.Loading -> {}
-                            is AuthorProfileUiState.Success -> {
+                            is UiState.Loading -> {}
+                            is UiState.Success -> {
                                 viewModel.authorProfile.value?.let { author ->
                                     binding.tvAuthorName.text = author.name
                                     binding.tvAuthorDesc.text = author.description
@@ -85,8 +86,11 @@ class AuthorProfileActivity : AppCompatActivity() {
                                     }
                                 }
                             }
-                            is AuthorProfileUiState.Error -> {
+                            is UiState.Error -> {
                                 Toast.makeText(this@AuthorProfileActivity, state.message, Toast.LENGTH_SHORT).show()
+                                if (state.message.contains("不存在") || state.message.contains("找不到")) {
+                                    finish()
+                                }
                             }
                             else -> {}
                         }

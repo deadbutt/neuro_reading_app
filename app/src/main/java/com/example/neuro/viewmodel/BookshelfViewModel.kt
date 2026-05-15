@@ -31,7 +31,7 @@ class BookshelfViewModel @Inject constructor(
 
             when (val result = articleRepository.getBookshelf()) {
                 is ApiResult.Success -> {
-                    val shelfItems = (result.data.list ?: emptyList()).map { item ->
+                    val shelfItems = result.data.safeList().map { item ->
                         ShelfItem(
                             bookId = item.articleId,
                             title = item.title,
@@ -39,7 +39,9 @@ class BookshelfViewModel @Inject constructor(
                             tag = "书架",
                             progress = item.progress,
                             coverUrl = item.cover,
-                            lastReadChapter = item.lastReadChapter
+                            lastReadChapter = item.lastReadChapter,
+                            chapterIndex = item.chapterIndex,
+                            isFinished = item.isFinished
                         )
                     }
                     _books.value = shelfItems

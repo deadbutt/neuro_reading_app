@@ -53,12 +53,13 @@ class ReaderActivity : AppCompatActivity() {
     private var fontSize = 16f
 
     private var chapters: List<ArticleChapterMeta> = emptyList()
+    private var totalWordCount: Int = 0
     private val loadedChapters = mutableMapOf<Int, ChapterContentResponse>()
     private var isLoadingNext = false
     private var isLoadingPrev = false
     private var pendingNextChapterIndex: Int? = null
     private var pendingPrevChapterIndex: Int? = null
-    private var isFirstLoad = true
+    private var currentScrollPosition = 0
 
     private lateinit var paragraphAdapter: ParagraphAdapter
 
@@ -145,8 +146,29 @@ class ReaderActivity : AppCompatActivity() {
                         if (chapterList.isNotEmpty()) {
                             chapters = chapterList
                             setupChapterList()
-                            viewModel.loadChapter(articleId, currentChapterIndex)
+                            if (chapterList.size == 1) {
+                                viewModel.loadChapter(articleId, currentChapterIndex)
+                            } else {
+                                viewModel.loadAllChapters(articleId)
+                            }
                         }
+                    }
+                }
+
+                launch {
+                    viewModel.allChapterContents.collect { allContents ->
+                        if (allContents.isNotEmpty()) {
+                            loadedChapters.clear()
+                            loadedChapters.putAll(allContents)
+                            displayAllChapters()
+                            updateTopTitle()
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.totalWordCount.collect { count ->
+                        totalWordCount = count
                     }
                 }
             }
@@ -175,7 +197,13 @@ class ReaderActivity : AppCompatActivity() {
                 val lastVisible = layoutManager.findLastVisibleItemPosition()
                 val total = paragraphAdapter.itemCount
 
+                currentScrollPosition = firstVisible
+
                 updateCurrentChapterByScroll(firstVisible)
+
+                if (isBarsVisible) {
+                    updateProgress()
+                }
 
                 if (dy > 0 && lastVisible >= total - 5 && !isLoadingNext) {
                     val lastChapterId = findLastChapterId()
@@ -308,11 +336,34 @@ class ReaderActivity : AppCompatActivity() {
     }
 
     private fun updateProgress() {
-        if (chapters.isNotEmpty()) {
-            val progress = ((currentChapterIndex + 1) * 100 / chapters.size)
-            binding.sbReaderProgress.progress = progress
-            binding.tvReaderProgress.text = "$progress%"
+        val items = paragraphAdapter.currentItems.filter { it !is ReaderItem.Loading }
+        val totalItems = items.size
+        if (totalItems <= 0) return
+
+        val layoutManager = binding.rvReaderBody.layoutManager as? LinearLayoutManager
+        val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
+        val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: firstVisible
+
+        // 将RecyclerView的位置映射到过滤后的items位置
+        val visibleItems = paragraphAdapter.currentItems
+        var filteredFirstVisible = 0
+        var visibleCount = 0
+        for (i in visibleItems.indices) {
+            if (visibleItems[i] !is ReaderItem.Loading) {
+                if (i <= firstVisible) {
+                    filteredFirstVisible = visibleCount
+                }
+                visibleCount++
+            }
         }
+
+        val progress = if (lastVisible >= paragraphAdapter.itemCount - 1) {
+            100
+        } else {
+            ((filteredFirstVisible + 1) * 100 / totalItems).coerceIn(0, 100)
+        }
+        binding.sbReaderProgress.progress = progress
+        binding.tvReaderProgress.text = "$progress%"
     }
 
     private fun setupChapterList() {
@@ -335,12 +386,37 @@ class ReaderActivity : AppCompatActivity() {
     }
 
     private fun jumpToChapter(chapterIndex: Int) {
-        loadedChapters.clear()
-        pendingNextChapterIndex = null
-        pendingPrevChapterIndex = null
-        currentChapterIndex = chapterIndex
-        viewModel.loadChapter(articleId, chapterIndex)
-        updateChapterListSelection(chapterIndex)
+        if (loadedChapters.containsKey(chapterIndex)) {
+            // 如果章节已加载，直接滚动到该章节
+            scrollToChapter(chapterIndex)
+        } else {
+            // 如果章节未加载，清空并加载该章节
+            loadedChapters.clear()
+            pendingNextChapterIndex = null
+            pendingPrevChapterIndex = null
+            currentChapterIndex = chapterIndex
+            viewModel.loadChapter(articleId, chapterIndex)
+            updateChapterListSelection(chapterIndex)
+        }
+    }
+
+    private fun scrollToChapter(chapterIndex: Int) {
+        val targetChapterId = chapters.getOrNull(chapterIndex)?.chapterId ?: return
+        val items = paragraphAdapter.currentItems
+        var targetPosition = -1
+        for (i in items.indices) {
+            val item = items[i]
+            if (item is ReaderItem.ChapterHeader && item.chapterId == targetChapterId) {
+                targetPosition = i
+                break
+            }
+        }
+        if (targetPosition >= 0) {
+            binding.rvReaderBody.scrollToPosition(targetPosition)
+            currentChapterIndex = chapterIndex
+            updateTopTitle()
+            updateChapterListSelection(chapterIndex)
+        }
     }
 
     private fun updateChapterListSelection(newPosition: Int) {
@@ -355,20 +431,16 @@ class ReaderActivity : AppCompatActivity() {
     }
 
     private fun goToPrevChapter() {
-        val currentContent = loadedChapters[currentChapterIndex]
-        val prevIndex = currentContent?.prevChapterId
-        if (prevIndex != null && prevIndex >= 0) {
-            jumpToChapter(prevIndex)
+        if (currentChapterIndex > 0) {
+            jumpToChapter(currentChapterIndex - 1)
         } else {
             Toast.makeText(this, "已经是第一章了", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun goToNextChapter() {
-        val currentContent = loadedChapters[currentChapterIndex]
-        val nextIndex = currentContent?.nextChapterId
-        if (nextIndex != null) {
-            jumpToChapter(nextIndex)
+        if (currentChapterIndex < chapters.size - 1) {
+            jumpToChapter(currentChapterIndex + 1)
         } else {
             Toast.makeText(this, "已经是最后一章了", Toast.LENGTH_SHORT).show()
         }
@@ -407,6 +479,8 @@ class ReaderActivity : AppCompatActivity() {
             .setDuration(250)
             .setInterpolator(AccelerateDecelerateInterpolator())
             .start()
+
+        updateProgress()
     }
 
     private fun hideBars() {
@@ -479,10 +553,10 @@ class ReaderActivity : AppCompatActivity() {
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
                     val progress = seekBar?.progress ?: 0
-                    val targetPosition = progress * (chapters.size - 1) / 100
-                    val targetIndex = chapters.getOrNull(targetPosition)?.index ?: targetPosition
-                    if (targetIndex in chapters.map { it.index }) {
-                        jumpToChapter(targetIndex)
+                    val totalItems = paragraphAdapter.itemCount
+                    if (totalItems > 0) {
+                        val targetPosition = progress * totalItems / 100
+                        binding.rvReaderBody.scrollToPosition(targetPosition.coerceIn(0, totalItems - 1))
                     }
                 }
             }
@@ -542,6 +616,40 @@ class ReaderActivity : AppCompatActivity() {
             else -> {
                 super.onBackPressed()
             }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (::articleId.isInitialized && articleId.isNotEmpty() && chapters.isNotEmpty()) {
+            val items = paragraphAdapter.currentItems.filter { it !is ReaderItem.Loading }
+            val totalItems = items.size
+            val layoutManager = binding.rvReaderBody.layoutManager as? LinearLayoutManager
+            val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
+            val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: firstVisible
+
+            val visibleItems = paragraphAdapter.currentItems
+            var filteredFirstVisible = 0
+            var visibleCount = 0
+            for (i in visibleItems.indices) {
+                if (visibleItems[i] !is ReaderItem.Loading) {
+                    if (i <= firstVisible) {
+                        filteredFirstVisible = visibleCount
+                    }
+                    visibleCount++
+                }
+            }
+
+            val progress = if (totalItems > 0) {
+                if (lastVisible >= paragraphAdapter.itemCount - 1) {
+                    100
+                } else {
+                    ((filteredFirstVisible + 1) * 100 / totalItems).coerceIn(0, 100)
+                }
+            } else {
+                (currentChapterIndex + 1) * 100 / chapters.size
+            }
+            viewModel.saveProgress(articleId, currentChapterIndex, progress, currentScrollPosition)
         }
     }
 }

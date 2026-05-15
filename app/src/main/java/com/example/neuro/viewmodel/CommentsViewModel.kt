@@ -35,7 +35,7 @@ class CommentsViewModel @Inject constructor(
 
             when (val result = repository.getArticleComments(articleId, currentPage, sort = currentSort)) {
                 is ApiResult.Success -> {
-                    _comments.value = result.data.list ?: emptyList()
+                    _comments.value = result.data.safeList()
                     _uiState.value = UiState.Success
                 }
                 is ApiResult.Error -> {
@@ -68,6 +68,25 @@ class CommentsViewModel @Inject constructor(
                     onResult(false, result.message)
                 }
                 ApiResult.Loading -> {}
+            }
+        }
+    }
+
+    fun toggleLike(commentId: String, currentlyLiked: Boolean) {
+        _comments.value = _comments.value.map {
+            if (it.commentId == commentId) {
+                it.copy(
+                    isLiked = !currentlyLiked,
+                    likeCount = if (currentlyLiked) it.likeCount - 1 else it.likeCount + 1
+                )
+            } else it
+        }
+
+        viewModelScope.launch {
+            if (currentlyLiked) {
+                repository.unlikeComment(commentId)
+            } else {
+                repository.likeComment(commentId)
             }
         }
     }

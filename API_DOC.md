@@ -428,6 +428,105 @@ GET /api/v1/user/following?page=1&pageSize=20
 
 ---
 
+### 12. 获取阅读历史
+
+```http
+GET /api/v1/user/reading-history?page=1&pageSize=20
+```
+
+**请求头：** `Authorization: Bearer {token}`
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "list": [
+      {
+        "historyId": "rh_001",
+        "articleId": "ar_1234567890",
+        "title": "仿生之心",
+        "author": "未知作者",
+        "cover": "https://example.com/cover.jpg",
+        "chapterIndex": 0,
+        "chapterTitle": "正文",
+        "progress": 65,
+        "position": 1250,
+        "readTime": 30,
+        "lastReadTime": "2024-01-15 14:30:00"
+      }
+    ],
+    "total": 15,
+    "page": 1,
+    "pageSize": 20,
+    "hasMore": false
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| historyId | string | 历史记录ID |
+| articleId | string | 文章ID |
+| title | string | 文章标题 |
+| author | string | 作者名 |
+| cover | string | 封面URL |
+| chapterIndex | int | 当前章节索引 |
+| chapterTitle | string | 当前章节标题 |
+| progress | int | 阅读进度 0-100 |
+| position | int | 当前阅读位置（字符偏移） |
+| readTime | int | 本次阅读时长（分钟） |
+| lastReadTime | string | 最后阅读时间 |
+
+**业务说明：**
+- 按最后阅读时间倒序排列
+- 与书架列表不同，阅读历史记录所有打开过的文章（包括未加入书架的）
+- 阅读历史最多保留100条记录
+
+---
+
+### 13. 删除阅读历史
+
+```http
+DELETE /api/v1/user/reading-history/{historyId}
+```
+
+**请求头：** `Authorization: Bearer {token}`
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "message": "删除成功",
+  "data": null
+}
+```
+
+---
+
+### 14. 清空阅读历史
+
+```http
+DELETE /api/v1/user/reading-history
+```
+
+**请求头：** `Authorization: Bearer {token}`
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "message": "已清空阅读历史",
+  "data": null
+}
+```
+
+---
+
 ## 书架模块
 
 ### 12. 获取书架列表
@@ -1839,6 +1938,24 @@ POST /api/v1/creator/works/upload/cover
 }
 ```
 
+### ReadingHistoryResponse
+
+```json
+{
+  "historyId": "string",
+  "articleId": "string",
+  "title": "string",
+  "author": "string",
+  "cover": "string",
+  "chapterIndex": 0,
+  "chapterTitle": "string",
+  "progress": 0,
+  "position": 0,
+  "readTime": 0,
+  "lastReadTime": "string"
+}
+```
+
 ### LoginResponse
 
 ```json
@@ -2031,44 +2148,47 @@ POST /api/v1/upload/avatar
 | 9 | /user/follow/{authorId} | POST | 关注作者 | 是 |
 | 10 | /user/follow/{authorId} | DELETE | 取消关注 | 是 |
 | 11 | /user/following | GET | 获取关注列表 | 是 |
-| 12 | /bookshelf | GET | 获取书架列表 | 是 |
-| 13 | /bookshelf/{articleId} | POST | 加入书架 | 是 |
-| 14 | /bookshelf/{articleId} | DELETE | 移出书架 | 是 |
-| 15 | /bookshelf/{articleId}/progress | PUT | 更新阅读进度 | 是 |
-| 16 | /articles | GET | 获取文章列表 | 否 |
-| 17 | /articles/search | GET | 搜索文章 | 否 |
-| 18 | /articles/{articleId} | GET | 获取文章详情 | 否 |
-| 19 | /articles/{articleId}/chapters/{chapterIndex} | GET | 获取章节内容 | 否 |
-| 20 | /articles/upload | POST | 上传文章 | 是 |
-| 21 | /articles/{articleId} | DELETE | 删除文章 | 是 |
-| 22 | /articles/{articleId}/comments | GET | 获取文章评论 | 是 |
-| 23 | /articles/{articleId}/comments | POST | 发表评论 | 是 |
-| 24 | /comments/{commentId}/like | POST | 点赞评论 | 是 |
-| 25 | /comments/{commentId}/like | DELETE | 取消点赞评论 | 是 |
-| 26 | /chapters/{chapterId}/paragraph-comments | GET | 获取段评列表 | 是 |
-| 27 | /chapters/{chapterId}/paragraph-comments | POST | 发表段评 | 是 |
-| 28 | /paragraph-comments/{commentId}/like | POST | 点赞段评 | 是 |
-| 29 | /paragraph-comments/{commentId}/like | DELETE | 取消点赞段评 | 是 |
-| 30 | /authors/{authorId} | GET | 获取作者主页 | 否 |
-| 31 | /authors/{authorId}/works | GET | 获取作者作品 | 否 |
-| 32 | /authors/{authorId}/activities | GET | 获取作者动态 | 否 |
-| 33 | /feed | GET | 获取关注流 | 是 |
-| 34 | /feed/{feedId}/like | POST | 点赞动态 | 是 |
-| 35 | /feed/{feedId}/like | DELETE | 取消点赞动态 | 是 |
-| 36 | /creator/register | POST | 创作者注册 | 否 |
-| 37 | /creator/login | POST | 创作者登录 | 否 |
-| 38 | /creator/profile | GET | 获取创作者资料 | 是 |
-| 39 | /creator/profile | PUT | 更新创作者资料 | 是 |
-| 40 | /creator/works | POST | 创建作品 | 是 |
-| 41 | /creator/works | GET | 获取我的作品列表 | 是 |
-| 42 | /creator/works/{workId} | GET | 获取作品详情 | 是 |
-| 43 | /creator/works/{workId} | PUT | 更新作品信息 | 是 |
-| 44 | /creator/works/{workId} | DELETE | 删除作品 | 是 |
-| 45 | /creator/works/{workId}/publish | POST | 发布作品 | 是 |
-| 46 | /creator/works/{workId}/chapters | POST | 创建章节 | 是 |
-| 47 | /creator/works/{workId}/chapters/{chapterIndex} | GET | 获取章节内容 | 是 |
-| 48 | /creator/works/{workId}/chapters/{chapterIndex} | PUT | 更新章节 | 是 |
-| 49 | /creator/works/{workId}/chapters/{chapterIndex} | DELETE | 删除章节 | 是 |
-| 50 | /creator/works/upload/docx | POST | 上传docx文档 | 是 |
-| 51 | /creator/works/upload/txt | POST | 上传txt/md创建作品 | 是 |
-| 52 | /creator/works/upload/cover | POST | 上传作品封面 | 是 |
+| 12 | /user/reading-history | GET | 获取阅读历史 | 是 |
+| 13 | /user/reading-history/{historyId} | DELETE | 删除阅读历史 | 是 |
+| 14 | /user/reading-history | DELETE | 清空阅读历史 | 是 |
+| 15 | /bookshelf | GET | 获取书架列表 | 是 |
+| 16 | /bookshelf/{articleId} | POST | 加入书架 | 是 |
+| 17 | /bookshelf/{articleId} | DELETE | 移出书架 | 是 |
+| 18 | /bookshelf/{articleId}/progress | PUT | 更新阅读进度 | 是 |
+| 19 | /articles | GET | 获取文章列表 | 否 |
+| 20 | /articles/search | GET | 搜索文章 | 否 |
+| 21 | /articles/{articleId} | GET | 获取文章详情 | 否 |
+| 22 | /articles/{articleId}/chapters/{chapterIndex} | GET | 获取章节内容 | 否 |
+| 23 | /articles/upload | POST | 上传文章 | 是 |
+| 24 | /articles/{articleId} | DELETE | 删除文章 | 是 |
+| 25 | /articles/{articleId}/comments | GET | 获取文章评论 | 是 |
+| 26 | /articles/{articleId}/comments | POST | 发表评论 | 是 |
+| 27 | /comments/{commentId}/like | POST | 点赞评论 | 是 |
+| 28 | /comments/{commentId}/like | DELETE | 取消点赞评论 | 是 |
+| 29 | /chapters/{chapterId}/paragraph-comments | GET | 获取段评列表 | 是 |
+| 30 | /chapters/{chapterId}/paragraph-comments | POST | 发表段评 | 是 |
+| 31 | /paragraph-comments/{commentId}/like | POST | 点赞段评 | 是 |
+| 32 | /paragraph-comments/{commentId}/like | DELETE | 取消点赞段评 | 是 |
+| 33 | /authors/{authorId} | GET | 获取作者主页 | 否 |
+| 34 | /authors/{authorId}/works | GET | 获取作者作品 | 否 |
+| 35 | /authors/{authorId}/activities | GET | 获取作者动态 | 否 |
+| 36 | /feed | GET | 获取关注流 | 是 |
+| 37 | /feed/{feedId}/like | POST | 点赞动态 | 是 |
+| 38 | /feed/{feedId}/like | DELETE | 取消点赞动态 | 是 |
+| 39 | /creator/register | POST | 创作者注册 | 否 |
+| 40 | /creator/login | POST | 创作者登录 | 否 |
+| 41 | /creator/profile | GET | 获取创作者资料 | 是 |
+| 42 | /creator/profile | PUT | 更新创作者资料 | 是 |
+| 43 | /creator/works | POST | 创建作品 | 是 |
+| 44 | /creator/works | GET | 获取我的作品列表 | 是 |
+| 45 | /creator/works/{workId} | GET | 获取作品详情 | 是 |
+| 46 | /creator/works/{workId} | PUT | 更新作品信息 | 是 |
+| 47 | /creator/works/{workId} | DELETE | 删除作品 | 是 |
+| 48 | /creator/works/{workId}/publish | POST | 发布作品 | 是 |
+| 49 | /creator/works/{workId}/chapters | POST | 创建章节 | 是 |
+| 50 | /creator/works/{workId}/chapters/{chapterIndex} | GET | 获取章节内容 | 是 |
+| 51 | /creator/works/{workId}/chapters/{chapterIndex} | PUT | 更新章节 | 是 |
+| 52 | /creator/works/{workId}/chapters/{chapterIndex} | DELETE | 删除章节 | 是 |
+| 53 | /creator/works/upload/docx | POST | 上传docx文档 | 是 |
+| 54 | /creator/works/upload/txt | POST | 上传txt/md创建作品 | 是 |
+| 55 | /creator/works/upload/cover | POST | 上传作品封面 | 是 |
