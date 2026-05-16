@@ -37,7 +37,11 @@ class UserViewModel @Inject constructor(
 
             when (val result = repository.login(account, password)) {
                 is ApiResult.Success -> {
-                    _loginState.value = LoginState.Success(result.data)
+                    result.data?.let {
+                        _loginState.value = LoginState.Success(it)
+                    } ?: run {
+                        _loginState.value = LoginState.Error("登录数据异常")
+                    }
                 }
                 is ApiResult.Error -> {
                     _loginState.value = LoginState.Error(result.message)
@@ -61,7 +65,11 @@ class UserViewModel @Inject constructor(
 
             when (val result = repository.register(account, code, password, confirmPassword, nickname)) {
                 is ApiResult.Success -> {
-                    _loginState.value = LoginState.Success(result.data)
+                    result.data?.let {
+                        _loginState.value = LoginState.Success(it)
+                    } ?: run {
+                        _loginState.value = LoginState.Error("注册数据异常")
+                    }
                 }
                 is ApiResult.Error -> {
                     _loginState.value = LoginState.Error(result.message)

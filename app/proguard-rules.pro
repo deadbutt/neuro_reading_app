@@ -23,17 +23,18 @@
 # Gson
 -keepattributes Signature
 -keepattributes *Annotation*
--keep class com.google.gson.** { *; }
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken { *; }
+-keepclassmembers class com.example.neuro.api.model.** {
+    <fields>;
+}
 
 # OkHttp
 -dontwarn okhttp3.**
 -dontwarn okio.**
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
 
 # Retrofit
 -dontwarn retrofit2.**
--keep class retrofit2.** { *; }
 -keepclasseswithmembers class * {
     @retrofit2.http.* <methods>;
 }
@@ -52,32 +53,14 @@
 }
 
 # Kotlin
--keep class kotlin.** { *; }
--keep class kotlin.Metadata { *; }
 -dontwarn kotlin.**
 -keepclassmembers class **$WhenMappings {
     <fields>;
-}
--keepclassmembers class kotlin.Metadata {
-    public <methods>;
 }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
 -keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
--keepclassmembers class kotlinx.coroutines.** {
-    volatile <fields>;
-}
-
-# AndroidX
--keep class androidx.** { *; }
--keep interface androidx.** { *; }
--dontwarn androidx.**
-
-# Keep native methods
--keepclasseswithmembernames class * {
-    native <methods>;
-}
 
 # Keep custom views
 -keep public class * extends android.view.View {

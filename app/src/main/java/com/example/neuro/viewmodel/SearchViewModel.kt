@@ -45,7 +45,7 @@ class SearchViewModel @Inject constructor(
 
             when (val result = repository.searchArticles(keyword)) {
                 is ApiResult.Success -> {
-                    val items = result.data.map { article ->
+                    val items = result.data?.map { article ->
                         BookItem(
                             bookId = article.articleId,
                             title = article.title,
@@ -53,7 +53,7 @@ class SearchViewModel @Inject constructor(
                             desc = article.summary,
                             coverUrl = article.cover ?: ""
                         )
-                    }
+                    } ?: emptyList()
                     _searchResults.value = items
                     _uiState.value = if (items.isEmpty()) UiState.Empty else UiState.Success
                 }

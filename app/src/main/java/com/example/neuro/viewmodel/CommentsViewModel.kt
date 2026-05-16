@@ -35,7 +35,7 @@ class CommentsViewModel @Inject constructor(
 
             when (val result = repository.getArticleComments(articleId, currentPage, sort = currentSort)) {
                 is ApiResult.Success -> {
-                    _comments.value = result.data.safeList()
+                    _comments.value = result.data?.safeList() ?: emptyList()
                     _uiState.value = UiState.Success
                 }
                 is ApiResult.Error -> {
@@ -61,7 +61,9 @@ class CommentsViewModel @Inject constructor(
             when (val result = repository.postComment(articleId, request)) {
                 is ApiResult.Success -> {
                     val newComment = result.data
-                    _comments.value = listOf(newComment) + _comments.value
+                    if (newComment != null) {
+                        _comments.value = listOf(newComment) + _comments.value
+                    }
                     onResult(true, "评论已发送")
                 }
                 is ApiResult.Error -> {

@@ -57,7 +57,12 @@ class TokenAuthenticator : Authenticator {
                 if (result.code == 0 && result.data != null) {
                     val newToken = result.data.token
                     val newRefreshToken = result.data.refreshToken
-                    UserManager.updateToken(context, newToken, newRefreshToken)
+                    if (newToken != null && newRefreshToken != null) {
+                        UserManager.updateToken(context, newToken, newRefreshToken)
+                    } else {
+                        UserManager.clearLoginInfo(context)
+                        return null
+                    }
 
                     response.request.newBuilder()
                         .header("Authorization", "Bearer $newToken")
@@ -82,7 +87,7 @@ class TokenAuthenticator : Authenticator {
     )
 
     private data class RefreshTokenData(
-        @SerializedName("token") val token: String,
-        @SerializedName("refreshToken") val refreshToken: String
+        @SerializedName("token") val token: String?,
+        @SerializedName("refreshToken") val refreshToken: String?
     )
 }

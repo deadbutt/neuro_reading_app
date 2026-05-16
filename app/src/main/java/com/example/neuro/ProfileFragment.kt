@@ -260,6 +260,7 @@ class ProfileFragment : Fragment() {
                 if (response.isSuccessful && response.body()?.code == 0) {
                     response.body()?.data?.url?.let { avatarUrl ->
                         UserManager.updateProfile(requireContext(), avatar = avatarUrl)
+                        loadAvatar(avatarUrl)
                     }
                     Toast.makeText(requireContext(), "头像上传成功", Toast.LENGTH_SHORT).show()
                 } else {

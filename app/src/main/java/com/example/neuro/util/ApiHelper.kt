@@ -35,12 +35,7 @@ object ApiHelper {
             val response = apiCall()
 
             if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
-                val data = response.body()?.data
-                if (data != null) {
-                    ApiResult.Success(data)
-                } else {
-                    ApiResult.Error("数据为空")
-                }
+                ApiResult.Success(response.body()?.data)
             } else {
                 val message = response.body()?.message ?: "请求失败"
                 ApiResult.Error(message)
@@ -52,7 +47,7 @@ object ApiHelper {
 }
 
 sealed class ApiResult<out T> {
-    data class Success<out T>(val data: T) : ApiResult<T>()
+    data class Success<out T>(val data: T?) : ApiResult<T>()
     data class Error(val message: String) : ApiResult<Nothing>()
     object Loading : ApiResult<Nothing>()
 }

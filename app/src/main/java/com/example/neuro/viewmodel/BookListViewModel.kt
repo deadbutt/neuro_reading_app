@@ -40,7 +40,7 @@ class BookListViewModel @Inject constructor(
 
             when (val result = repository.getArticles(type, currentPage, forceRefresh = isRefresh)) {
                 is ApiResult.Success -> {
-                    val newBooks = result.data
+                    val newBooks = result.data ?: emptyList()
                     if (isRefresh) {
                         _books.value = newBooks
                     } else {

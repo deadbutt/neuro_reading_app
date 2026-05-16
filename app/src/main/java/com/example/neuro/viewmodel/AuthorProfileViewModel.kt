@@ -37,8 +37,9 @@ class AuthorProfileViewModel @Inject constructor(
 
             when (val result = userRepository.getAuthorProfile(authorId)) {
                 is ApiResult.Success -> {
-                    _authorProfile.value = result.data
-                    _isFollowing.value = result.data.isFollowing
+                    val profile = result.data
+                    _authorProfile.value = profile
+                    _isFollowing.value = profile?.isFollowing ?: false
                     _uiState.value = UiState.Success
                 }
                 is ApiResult.Error -> {
@@ -53,7 +54,7 @@ class AuthorProfileViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = userRepository.getAuthorWorks(authorId, page)) {
                 is ApiResult.Success -> {
-                    val list = result.data.safeList()
+                    val list = result.data?.safeList() ?: emptyList()
                     if (page == 1) {
                         _works.value = list
                     } else {

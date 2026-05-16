@@ -34,7 +34,7 @@ class BookDetailViewModel @Inject constructor(
 
             when (val result = repository.getArticleDetail(articleId)) {
                 is ApiResult.Success -> {
-                    _article.value = result.data
+                    result.data?.let { _article.value = it }
                     _uiState.value = UiState.Success
                     loadPreviewComments(articleId)
                 }
@@ -52,7 +52,7 @@ class BookDetailViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = repository.getArticleComments(articleId, page = 1, pageSize = 3, sort = "hot")) {
                 is ApiResult.Success -> {
-                    _previewComments.value = result.data.safeList().take(3)
+                    _previewComments.value = result.data?.safeList()?.take(3) ?: emptyList()
                 }
                 is ApiResult.Error -> {
                     _previewComments.value = emptyList()

@@ -42,7 +42,7 @@ class FeedViewModel @Inject constructor(
 
             when (val result = safeFeedApiCall { apiService.getFeedList(page = currentPage) }) {
                 is ApiResult.Success -> {
-                    val items = result.data.safeList()
+                    val items = result.data?.safeList() ?: emptyList()
                     if (isRefresh) {
                         _feedItems.value = items
                     } else {
@@ -66,9 +66,7 @@ class FeedViewModel @Inject constructor(
         return try {
             val response = apiCall()
             if (response.isSuccessful && response.body()?.code == 0) {
-                val data = response.body()?.data
-                if (data != null) ApiResult.Success(data)
-                else ApiResult.Error("数据为空")
+                ApiResult.Success(response.body()?.data)
             } else {
                 ApiResult.Error(response.body()?.message ?: "请求失败")
             }

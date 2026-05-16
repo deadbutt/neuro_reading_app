@@ -39,8 +39,9 @@ class ReaderViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = repository.getArticleDetail(articleId)) {
                 is ApiResult.Success -> {
-                    _chapters.value = result.data.chapters
-                    _totalWordCount.value = result.data.wordCount
+                    val meta = result.data
+                    _chapters.value = meta?.chapters ?: emptyList()
+                    _totalWordCount.value = meta?.wordCount ?: 0
                 }
                 is ApiResult.Error -> {}
                 ApiResult.Loading -> {}
@@ -54,7 +55,7 @@ class ReaderViewModel @Inject constructor(
 
             when (val result = repository.getChapterContent(articleId, chapterIndex)) {
                 is ApiResult.Success -> {
-                    _chapterContent.value = result.data
+                    result.data?.let { _chapterContent.value = it }
                     _uiState.value = UiState.Success
                 }
                 is ApiResult.Error -> {
@@ -75,7 +76,7 @@ class ReaderViewModel @Inject constructor(
             for ((index, chapter) in chapterList.withIndex()) {
                 when (val result = repository.getChapterContent(articleId, chapter.index)) {
                     is ApiResult.Success -> {
-                        allContents[index] = result.data
+                        result.data?.let { allContents[index] = it }
                     }
                     is ApiResult.Error -> {
                         _uiState.value = UiState.Error(result.message)
