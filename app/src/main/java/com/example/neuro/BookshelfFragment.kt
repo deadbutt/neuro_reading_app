@@ -2,6 +2,7 @@ package com.example.neuro
 
 import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.neuro.databinding.FragmentBookshelfBinding
 import com.example.neuro.viewmodel.BookshelfUiState
 import com.example.neuro.viewmodel.BookshelfViewModel
-import com.example.neuro.viewmodel.FeedViewModel
+import com.example.neuro.viewmodel.UserViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -25,21 +26,21 @@ import kotlinx.coroutines.launch
 class BookshelfFragment : Fragment() {
 
     companion object {
-        const val TAB_READING = 0
-        const val TAB_FINISHED = 1
-        const val TAB_SUBSCRIBE = 2
+        const val TAB_ALL = 0
+        const val TAB_FAVORITE = 1
+        const val TAB_FOLLOWING = 2
     }
 
     private var _binding: FragmentBookshelfBinding? = null
     private val binding get() = _binding!!
 
     private val bookshelfVM: BookshelfViewModel by viewModels()
-    private val feedVM: FeedViewModel by viewModels()
+    private val userVM: UserViewModel by viewModels()
 
-    private var currentTab = TAB_READING
+    private var currentTab = TAB_ALL
     private var isEditMode = false
     private lateinit var bookshelfAdapter: BookshelfAdapter
-    private lateinit var feedAdapter: FeedActivityAdapter
+    private lateinit var followingAdapter: FollowingAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentBookshelfBinding.inflate(inflater, container, false)
@@ -53,42 +54,49 @@ class BookshelfFragment : Fragment() {
         setupEditBar()
         setupTabs()
         observeBookshelf()
-        observeFeed()
+        observeFollowing()
 
         binding.tvShelfEdit.setOnClickListener { toggleEditMode() }
     }
 
     override fun onResume() {
         super.onResume()
-        if (currentTab == TAB_SUBSCRIBE) {
-            feedVM.loadFeed(isRefresh = true)
+        if (currentTab == TAB_FOLLOWING) {
+            userVM.getFollowingList()
         } else {
-            bookshelfVM.loadBookshelf()
+            val category = if (currentTab == TAB_FAVORITE) "favorite" else "all"
+            bookshelfVM.loadBookshelf(category)
         }
     }
 
     private fun setupRecyclerView() {
         binding.rvShelf.layoutManager = LinearLayoutManager(requireContext())
 
-        bookshelfAdapter = BookshelfAdapter(isEditMode = false) { book, _ ->
-            if (isEditMode) return@BookshelfAdapter
-            if (book.bookId.isNotEmpty()) {
-                ReaderActivity.start(requireContext(), book.bookId, book.chapterIndex, book.title)
+        bookshelfAdapter = BookshelfAdapter(isEditMode = false) { book, pos ->
+            Log.d("BookshelfFragment", "=== onItemClick called ===")
+            Log.d("BookshelfFragment", "bookId=${book.bookId}, title=${book.title}, pos=$pos")
+            Log.d("BookshelfFragment", "isEditMode=$isEditMode")
+            if (isEditMode) {
+                Log.d("BookshelfFragment", "edit mode, skip")
+                return@BookshelfAdapter
+            }
+            if (book.bookId.isEmpty()) {
+                Log.d("BookshelfFragment", "bookId empty, skip")
+                return@BookshelfAdapter
+            }
+            try {
+                Log.d("BookshelfFragment", "starting BookDetailActivity...")
+                BookDetailActivity.start(requireContext(), book.bookId)
+                Log.d("BookshelfFragment", "BookDetailActivity.start called successfully")
+            } catch (e: Exception) {
+                Log.e("BookshelfFragment", "Failed to start BookDetailActivity", e)
+                Toast.makeText(requireContext(), "跳转失败: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
 
-        feedAdapter = FeedActivityAdapter(emptyList(),
-            onItemClick = { item ->
-                item.bookId?.let { id ->
-                    if (id.isNotEmpty()) {
-                        BookDetailActivity.start(requireContext(), id)
-                    }
-                }
-            },
-            onLikeClick = { item, _ ->
-                Toast.makeText(requireContext(), "点赞成功", Toast.LENGTH_SHORT).show()
-            }
-        )
+        followingAdapter = FollowingAdapter { item ->
+            AuthorProfileActivity.start(requireContext(), item.authorId)
+        }
 
         binding.rvShelf.adapter = bookshelfAdapter
     }
@@ -100,7 +108,7 @@ class BookshelfFragment : Fragment() {
                     bookshelfVM.uiState.collect { state ->
                         when (state) {
                             is BookshelfUiState.Error -> {
-                                if (currentTab != TAB_SUBSCRIBE) {
+                                if (currentTab != TAB_FOLLOWING) {
                                     Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                                 }
                             }
@@ -115,14 +123,10 @@ class BookshelfFragment : Fragment() {
 
                 launch {
                     bookshelfVM.books.collect { items ->
-                        if (currentTab != TAB_SUBSCRIBE) {
-                            val filtered = if (currentTab == TAB_READING) {
-                                items.filter { !it.isFinished || it.progress < 100 }
-                            } else {
-                                items.filter { it.isFinished && it.progress >= 100 }
-                            }
-                            bookshelfAdapter.updateData(filtered, isEditMode)
-                            updateEmptyState(filtered.isEmpty())
+                        Log.d("BookshelfFragment", "books collected: size=${items.size}")
+                        if (currentTab != TAB_FOLLOWING) {
+                            bookshelfAdapter.updateData(items, isEditMode)
+                            updateEmptyState(items.isEmpty())
                         }
                     }
                 }
@@ -130,47 +134,20 @@ class BookshelfFragment : Fragment() {
         }
     }
 
-    private fun observeFeed() {
+    private fun observeFollowing() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
-                    feedVM.uiState.collect { state ->
-                        if (currentTab != TAB_SUBSCRIBE) return@collect
-                    }
-                }
-
-                launch {
-                    feedVM.feedItems.collect { items ->
-                        if (currentTab == TAB_SUBSCRIBE) {
-                            val feedItems = items.map { r ->
-                                FeedActivityItem(
-                                    feedId = r.feedId,
-                                    authorId = r.authorId,
-                                    authorName = r.authorName,
-                                    authorAvatar = r.authorAvatar,
-                                    publishTime = r.publishTime,
-                                    activityContent = r.activityContent,
-                                    bookId = r.bookId,
-                                    bookCover = r.bookCover ?: "",
-                                    chapterPreview = r.chapterPreview ?: "",
-                                    likeCount = formatCount(r.likeCount),
-                                    commentCount = formatCount(r.commentCount),
-                                    isLiked = r.isLiked
+                    userVM.followingList.collect { authors ->
+                        if (currentTab == TAB_FOLLOWING) {
+                            val items = authors.map { a ->
+                                FollowingItem(
+                                    authorId = a.authorId,
+                                    authorName = a.name,
+                                    authorAvatar = a.avatar
                                 )
                             }
-                            feedAdapter = FeedActivityAdapter(feedItems,
-                                onItemClick = { item ->
-                                    item.bookId?.let { id ->
-                                        if (id.isNotEmpty()) {
-                                            BookDetailActivity.start(requireContext(), id)
-                                        }
-                                    }
-                                },
-                                onLikeClick = { _, _ ->
-                                    Toast.makeText(requireContext(), "点赞成功", Toast.LENGTH_SHORT).show()
-                                }
-                            )
-                            binding.rvShelf.adapter = feedAdapter
+                            followingAdapter.updateData(items)
                             updateEmptyState(items.isEmpty())
                         }
                     }
@@ -198,7 +175,7 @@ class BookshelfFragment : Fragment() {
     }
 
     private fun toggleEditMode() {
-        if (currentTab == TAB_SUBSCRIBE) return
+        if (currentTab == TAB_FOLLOWING) return
         isEditMode = !isEditMode
         binding.tvShelfEdit.text = if (isEditMode) "完成" else "编辑"
         binding.llShelfEditBar.visibility = if (isEditMode) View.VISIBLE else View.GONE
@@ -222,9 +199,9 @@ class BookshelfFragment : Fragment() {
     }
 
     private fun setupTabs() {
-        binding.tvShelfTabReading.setOnClickListener { switchTab(TAB_READING) }
-        binding.tvShelfTabRead.setOnClickListener { switchTab(TAB_FINISHED) }
-        binding.tvShelfTabSubscribe.setOnClickListener { switchTab(TAB_SUBSCRIBE) }
+        binding.tvShelfTabReading.setOnClickListener { switchTab(TAB_ALL) }
+        binding.tvShelfTabRead.setOnClickListener { switchTab(TAB_FAVORITE) }
+        binding.tvShelfTabSubscribe.setOnClickListener { switchTab(TAB_FOLLOWING) }
     }
 
     private fun switchTab(tab: Int) {
@@ -236,38 +213,42 @@ class BookshelfFragment : Fragment() {
         binding.llShelfEditBar.visibility = View.GONE
 
         val ctx = requireContext()
+
         val tabs = listOf(
-            binding.tvShelfTabReading to TAB_READING,
-            binding.tvShelfTabRead to TAB_FINISHED,
-            binding.tvShelfTabSubscribe to TAB_SUBSCRIBE
+            Triple(binding.tvShelfTabReading, binding.vShelfIndicatorAll, TAB_ALL),
+            Triple(binding.tvShelfTabRead, binding.vShelfIndicatorFavorite, TAB_FAVORITE),
+            Triple(binding.tvShelfTabSubscribe, binding.vShelfIndicatorSubscribe, TAB_FOLLOWING)
         )
-        for ((tv, t) in tabs) {
+        for ((tv, indicator, t) in tabs) {
             if (t == tab) {
                 tv.setTextColor(ContextCompat.getColor(ctx, R.color.primary_red))
                 tv.setTypeface(null, Typeface.BOLD)
+                indicator.visibility = View.VISIBLE
             } else {
                 tv.setTextColor(ContextCompat.getColor(ctx, R.color.tab_inactive))
                 tv.setTypeface(null, Typeface.NORMAL)
+                indicator.visibility = View.INVISIBLE
             }
         }
 
-        binding.tvShelfEdit.visibility = if (tab == TAB_SUBSCRIBE) View.GONE else View.VISIBLE
+        binding.tvShelfEdit.visibility = if (tab == TAB_FOLLOWING) View.GONE else View.VISIBLE
 
         when (tab) {
-            TAB_READING -> {
-                val items = bookshelfVM.books.value.filter { !it.isFinished || it.progress < 100 }
+            TAB_ALL -> {
                 binding.rvShelf.adapter = bookshelfAdapter
-                bookshelfAdapter.updateData(items, false)
-                updateEmptyState(items.isEmpty())
+                bookshelfAdapter.updateData(bookshelfVM.books.value, isEditMode)
+                updateEmptyState(bookshelfVM.books.value.isEmpty())
+                bookshelfVM.loadBookshelf("all")
             }
-            TAB_FINISHED -> {
-                val items = bookshelfVM.books.value.filter { it.isFinished && it.progress >= 100 }
+            TAB_FAVORITE -> {
                 binding.rvShelf.adapter = bookshelfAdapter
-                bookshelfAdapter.updateData(items, false)
-                updateEmptyState(items.isEmpty())
+                bookshelfAdapter.updateData(bookshelfVM.books.value, isEditMode)
+                updateEmptyState(bookshelfVM.books.value.isEmpty())
+                bookshelfVM.loadBookshelf("favorite")
             }
-            TAB_SUBSCRIBE -> {
-                feedVM.loadFeed(isRefresh = true)
+            TAB_FOLLOWING -> {
+                binding.rvShelf.adapter = followingAdapter
+                userVM.getFollowingList()
             }
         }
     }

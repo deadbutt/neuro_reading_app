@@ -65,46 +65,11 @@
                 android:textSize="@dimen/book_author_size" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="进度"
-                android:textColor="@color/text_hint"
-                android:textSize="@dimen/text_micro" />
-
-            <ProgressBar
-                android:id="@+id/pb_shelf_progress"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/shelf_progress_bar_height"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:max="100"
-                android:progress="60"
-                android:progressDrawable="@drawable/bg_shelf_progress" />
-
-            <TextView
-                android:id="@+id/tv_shelf_progress_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="60%"
-                android:textColor="@color/text_hint"
-                android:textSize="@dimen/text_micro" />
-        </LinearLayout>
-
         <TextView
             android:id="@+id/tv_last_read_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:textColor="@color/text_hint"
             android:textSize="@dimen/text_micro" />
     </LinearLayout>

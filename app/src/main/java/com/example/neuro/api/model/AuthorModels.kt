@@ -46,3 +46,8 @@ data class FeedActivityResponse(
     val commentCount: Int,
     val isLiked: Boolean
 )
+
+// 关注状态响应
+data class FollowStatusResponse(
+    val isFollowing: Boolean
+)

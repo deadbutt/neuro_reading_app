@@ -1,10 +1,10 @@
 package com.example.neuro
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -20,24 +20,38 @@ data class ShelfItem(
     val lastReadChapter: String = "",
     val chapterIndex: Int = 0,
     val isFinished: Boolean = false,
+    val isFavorite: Boolean = false,
     val isSelected: Boolean = false
 )
 
 class BookshelfAdapter(
-    private var items: List<ShelfItem> = emptyList(),
     private var isEditMode: Boolean = false,
-    private val onItemClick: (ShelfItem, Int) -> Unit = { _, _ -> },
-    private val onCheckboxClick: ((ShelfItem, Int) -> Unit)? = null
+    private val onCheckboxClick: ((ShelfItem, Int) -> Unit)? = null,
+    private var items: List<ShelfItem> = emptyList(),
+    private val onItemClick: (ShelfItem, Int) -> Unit
 ) : RecyclerView.Adapter<BookshelfAdapter.ViewHolder>() {
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val ivCover: ImageView = view.findViewById(R.id.iv_shelf_cover)
         val tvTitle: TextView = view.findViewById(R.id.tv_shelf_book_title)
         val tvAuthor: TextView = view.findViewById(R.id.tv_shelf_author)
         val tvTag: TextView = view.findViewById(R.id.tv_shelf_tag)
-        val pbProgress: ProgressBar = view.findViewById(R.id.pb_shelf_progress)
-        val tvProgress: TextView = view.findViewById(R.id.tv_shelf_progress_text)
         val ivCheckbox: ImageView = view.findViewById(R.id.iv_shelf_checkbox)
+
+        init {
+            itemView.setOnClickListener {
+                Log.d("BookshelfAdapter", "itemView clicked, isEditMode=$isEditMode")
+                val pos = bindingAdapterPosition
+                if (pos != RecyclerView.NO_POSITION) {
+                    val book = items[pos]
+                    Log.d("BookshelfAdapter", "bookId=${book.bookId}, title=${book.title}")
+                    if (!isEditMode && book.bookId.isNotEmpty()) {
+                        Log.d("BookshelfAdapter", "calling onItemClick")
+                        onItemClick(book, pos)
+                    }
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -55,8 +69,6 @@ class BookshelfAdapter(
         } else {
             holder.tvTag.text = "· ${book.tag}"
         }
-        holder.pbProgress.progress = book.progress
-        holder.tvProgress.text = "${book.progress}%"
 
         if (book.coverUrl.isNotEmpty()) {
             Glide.with(holder.itemView.context)
@@ -79,8 +91,6 @@ class BookshelfAdapter(
         } else {
             holder.ivCheckbox.visibility = View.GONE
         }
-
-        holder.itemView.setOnClickListener { onItemClick(book, position) }
     }
 
     override fun getItemCount(): Int = items.size

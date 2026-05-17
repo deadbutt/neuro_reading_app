@@ -46,4 +46,6 @@
     <color name="neuro_selection">#E85555</color>
     <color name="neuro_accent">#D84848</color>
     <color name="neuro_tag_cloud">#F0F0F5</color>
+    <color name="finished_green">#4CAF50</color>
+
 </resources>

@@ -3,7 +3,7 @@ package com.example.neuro.api.model
 // 评论响应
 data class CommentResponse(
     val commentId: String,
-    val articleId: String,    // 文章ID
+    val articleId: String? = null,    // 文章ID
     val userId: String,
     val userName: String,
     val userAvatar: String,

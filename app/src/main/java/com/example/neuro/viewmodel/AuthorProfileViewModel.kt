@@ -2,8 +2,8 @@ package com.example.neuro.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.neuro.api.model.ArticleIndex
 import com.example.neuro.api.model.AuthorProfileResponse
+import com.example.neuro.api.model.BookResponse
 import com.example.neuro.base.UiState
 import com.example.neuro.repository.UserRepository
 import com.example.neuro.util.ApiResult
@@ -28,8 +28,8 @@ class AuthorProfileViewModel @Inject constructor(
     private val _isFollowing = MutableStateFlow(false)
     val isFollowing: StateFlow<Boolean> = _isFollowing.asStateFlow()
 
-    private val _works = MutableStateFlow<List<ArticleIndex>>(emptyList())
-    val works: StateFlow<List<ArticleIndex>> = _works.asStateFlow()
+    private val _works = MutableStateFlow<List<BookResponse>>(emptyList())
+    val works: StateFlow<List<BookResponse>> = _works.asStateFlow()
 
     fun loadAuthorProfile(authorId: String) {
         viewModelScope.launch {
@@ -39,12 +39,23 @@ class AuthorProfileViewModel @Inject constructor(
                 is ApiResult.Success -> {
                     val profile = result.data
                     _authorProfile.value = profile
-                    _isFollowing.value = profile?.isFollowing ?: false
                     _uiState.value = UiState.Success
                 }
                 is ApiResult.Error -> {
                     _uiState.value = UiState.Error(result.message)
                 }
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
+    fun loadFollowStatus(authorId: String) {
+        viewModelScope.launch {
+            when (val result = userRepository.getAuthorFollowStatus(authorId)) {
+                is ApiResult.Success -> {
+                    _isFollowing.value = result.data?.isFollowing ?: false
+                }
+                is ApiResult.Error -> {}
                 ApiResult.Loading -> {}
             }
         }
@@ -80,7 +91,9 @@ class AuthorProfileViewModel @Inject constructor(
                 is ApiResult.Success -> {
                     _isFollowing.value = !current
                 }
-                is ApiResult.Error -> {}
+                is ApiResult.Error -> {
+                    _uiState.value = UiState.Error(result.message)
+                }
                 ApiResult.Loading -> {}
             }
         }

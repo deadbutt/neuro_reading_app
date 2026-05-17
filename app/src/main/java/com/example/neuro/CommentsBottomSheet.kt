@@ -33,7 +33,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
 
         const val SORT_INDEX_HOT = 0
         const val SORT_INDEX_NEW = 1
-        const val SORT_INDEX_AUTHOR = 2
 
         fun newInstance(articleId: String): CommentsBottomSheet {
             return CommentsBottomSheet().apply {
@@ -83,7 +82,6 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             bottomSheet?.let { sheet ->
                 val behavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(sheet)
                 behavior.state = com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-                // 禁用拖动关闭，使用普通滑动
                 behavior.isDraggable = false
             }
         }
@@ -128,12 +126,17 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
 
     private fun CommentResponse.toCommentItem(): CommentItem {
         return CommentItem(
+            commentId = this.commentId,
             name = this.userName,
             avatarUrl = com.example.neuro.util.UrlUtils.normalize(this.userAvatar),
             time = this.createTime,
             content = this.content,
             likes = formatCount(this.likeCount),
-            isAuthor = false
+            likeCount = this.likeCount,
+            isLiked = this.isLiked,
+            isAuthor = false,
+            replyCount = this.replyCount,
+            replies = this.replies ?: emptyList()
         )
     }
 
@@ -148,7 +151,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupSortTabs() {
-        val tabs = listOf(binding.tvSortHot, binding.tvSortNew, binding.tvSortAuthor)
+        val tabs = listOf(binding.tvSortHot, binding.tvSortNew)
         tabs.forEachIndexed { index, tv ->
             tv.setOnClickListener { selectSort(index) }
         }
@@ -158,11 +161,10 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         val sort = when (index) {
             SORT_INDEX_HOT -> Constants.CommentSort.HOT
             SORT_INDEX_NEW -> Constants.CommentSort.NEW
-            SORT_INDEX_AUTHOR -> Constants.CommentSort.AUTHOR
             else -> Constants.CommentSort.HOT
         }
 
-        val tabs = listOf(binding.tvSortHot, binding.tvSortNew, binding.tvSortAuthor)
+        val tabs = listOf(binding.tvSortHot, binding.tvSortNew)
         for ((i, tv) in tabs.withIndex()) {
             if (i == index) {
                 tv.setTextColor(requireContext().getColor(R.color.primary_red))
@@ -173,6 +175,7 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             }
         }
         viewModel.setSort(sort)
+        viewModel.loadComments(articleId)
     }
 
     private fun setupRecyclerView() {
@@ -181,8 +184,11 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
             onLikeClick = { comment, position ->
                 likeComment(comment, position)
             },
-            onReplyClick = {
-                Toast.makeText(requireContext(), R.string.msg_reply_feature, Toast.LENGTH_SHORT).show()
+            onReplyClick = { comment ->
+                showReplyInput(comment)
+            },
+            onViewMoreReplies = { comment, position ->
+                Toast.makeText(requireContext(), "查看更多回复功能开发中", Toast.LENGTH_SHORT).show()
             }
         )
         binding.rvComments.adapter = adapter
@@ -191,6 +197,14 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
     private fun likeComment(comment: CommentItem, position: Int) {
         val responseComment = viewModel.comments.value.getOrNull(position) ?: return
         viewModel.toggleLike(responseComment.commentId, responseComment.isLiked)
+    }
+
+    private fun showReplyInput(comment: CommentItem) {
+        binding.etCommentInput.hint = "回复 ${comment.name}:"
+        binding.etCommentInput.tag = comment.commentId
+        binding.etCommentInput.requestFocus()
+        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(binding.etCommentInput, InputMethodManager.SHOW_IMPLICIT)
     }
 
     private fun setupSwipeRefresh() {
@@ -203,10 +217,15 @@ class CommentsBottomSheet : BottomSheetDialogFragment() {
         binding.btnSend.setOnClickListener {
             val text = binding.etCommentInput.text.toString().trim()
             if (text.isNotEmpty()) {
-                viewModel.postComment(articleId, text) { success, message ->
+                val parentId = binding.etCommentInput.tag as? String
+                viewModel.postComment(articleId, text, parentId) { success, message ->
                     if (success) {
                         binding.etCommentInput.text.clear()
+                        binding.etCommentInput.hint = getString(R.string.comments_hint)
+                        binding.etCommentInput.tag = null
                         Toast.makeText(requireContext(), R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()
+                        // 刷新评论列表以显示新回复
+                        viewModel.refreshComments(articleId)
                     } else {
                         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                     }

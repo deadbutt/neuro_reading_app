@@ -31,7 +31,8 @@ data class BookshelfItemResponse(
     val lastReadTime: String,
     val progress: Int,        // 阅读进度 0-100
     val chapterIndex: Int = 0, // 当前章节索引
-    val isFinished: Boolean
+    val isFinished: Boolean,
+    val isFavorite: Boolean = false
 )
 
 // 更新阅读进度请求

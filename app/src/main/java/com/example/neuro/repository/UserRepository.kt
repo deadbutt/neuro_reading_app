@@ -92,9 +92,15 @@ class UserRepository @Inject constructor(
         }
     }
 
-    suspend fun getAuthorWorks(authorId: String, page: Int = 1, pageSize: Int = 20): ApiResult<PaginatedResponse<ArticleIndex>> {
+    suspend fun getAuthorWorks(authorId: String, page: Int = 1, pageSize: Int = 20): ApiResult<PaginatedResponse<BookResponse>> {
         return ApiHelper.safeApiCallWithMessage {
             apiService.getAuthorWorks(authorId, page, pageSize)
+        }
+    }
+
+    suspend fun getAuthorFollowStatus(authorId: String): ApiResult<FollowStatusResponse> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getAuthorFollowStatus(authorId)
         }
     }
 
@@ -113,6 +119,30 @@ class UserRepository @Inject constructor(
     suspend fun clearReadingHistory(): ApiResult<Unit> {
         return ApiHelper.safeApiCallWithMessage {
             apiService.clearReadingHistory()
+        }
+    }
+
+    suspend fun getNotifications(page: Int = 1, pageSize: Int = 20): ApiResult<PaginatedResponse<NotificationResponse>> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getNotifications(page, pageSize)
+        }
+    }
+
+    suspend fun getNotificationCount(): ApiResult<NotificationCountResponse> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getNotificationCount()
+        }
+    }
+
+    suspend fun markNotificationAsRead(notificationId: String): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.markNotificationAsRead(notificationId)
+        }
+    }
+
+    suspend fun markAllNotificationsAsRead(): ApiResult<Unit> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.markAllNotificationsAsRead()
         }
     }
 }

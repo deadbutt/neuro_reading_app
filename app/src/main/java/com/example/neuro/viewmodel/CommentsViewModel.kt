@@ -55,9 +55,9 @@ class CommentsViewModel @Inject constructor(
         currentPage = 1
     }
 
-    fun postComment(articleId: String, content: String, onResult: (Boolean, String) -> Unit) {
+    fun postComment(articleId: String, content: String, parentId: String? = null, onResult: (Boolean, String) -> Unit) {
         viewModelScope.launch {
-            val request = PostCommentRequest(content = content)
+            val request = PostCommentRequest(content = content, parentId = parentId)
             when (val result = repository.postComment(articleId, request)) {
                 is ApiResult.Success -> {
                     val newComment = result.data

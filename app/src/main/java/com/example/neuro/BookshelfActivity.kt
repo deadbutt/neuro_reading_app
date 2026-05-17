@@ -108,12 +108,15 @@ class BookshelfActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         rv.layoutManager = LinearLayoutManager(this)
-        adapter = BookshelfAdapter(isEditMode = false) { book, _ ->
-            if (isEditMode) return@BookshelfAdapter
-            if (book.bookId.isNotEmpty()) {
-                ReaderActivity.start(this, book.bookId, book.chapterIndex, book.title)
+        adapter = BookshelfAdapter(
+            isEditMode = false,
+            onItemClick = { book, _ ->
+                if (isEditMode) return@BookshelfAdapter
+                if (book.bookId.isNotEmpty()) {
+                    ReaderActivity.start(this, book.bookId, book.chapterIndex, book.title)
+                }
             }
-        }
+        )
         rv.adapter = adapter
     }
 

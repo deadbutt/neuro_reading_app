@@ -106,7 +106,7 @@ class SearchActivity : AppCompatActivity() {
             emptyView.visibility = View.GONE
             resultRv.visibility = View.VISIBLE
             resultRv.layoutManager = LinearLayoutManager(this)
-            resultRv.adapter = BookAdapter(results) { book ->
+            resultRv.adapter = BookAdapter(results.toMutableList()) { book ->
                 if (book.bookId.isNotEmpty()) {
                     BookDetailActivity.start(this, book.bookId)
                 }

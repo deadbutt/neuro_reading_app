@@ -149,6 +149,28 @@
                     android:textSize="@dimen/comment_action_text_size" />
             </LinearLayout>
         </LinearLayout>
+
+        <!-- 回复列表容器 -->
+        <LinearLayout
+            android:id="@+id/ll_replies"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_reply_container"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:visibility="gone" />
+
+        <!-- 查看更多回复 -->
+        <TextView
+            android:id="@+id/tv_view_more_replies"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/primary_red"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </LinearLayout>

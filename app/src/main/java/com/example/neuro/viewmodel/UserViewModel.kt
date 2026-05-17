@@ -2,6 +2,7 @@ package com.example.neuro.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.neuro.api.model.AuthorResponse
 import com.example.neuro.api.model.LoginResponse
 import com.example.neuro.api.model.ReadingHistoryResponse
 import com.example.neuro.api.model.UserProfileResponse
@@ -30,6 +31,12 @@ class UserViewModel @Inject constructor(
 
     private val _historyLoading = MutableStateFlow(false)
     val historyLoading: StateFlow<Boolean> = _historyLoading.asStateFlow()
+
+    private val _unreadNotificationCount = MutableStateFlow(0L)
+    val unreadNotificationCount: StateFlow<Long> = _unreadNotificationCount.asStateFlow()
+
+    private val _followingList = MutableStateFlow<List<AuthorResponse>>(emptyList())
+    val followingList: StateFlow<List<AuthorResponse>> = _followingList.asStateFlow()
 
     fun login(account: String, password: String) {
         viewModelScope.launch {
@@ -155,8 +162,32 @@ class UserViewModel @Inject constructor(
         }
     }
 
+    fun getNotificationCount() {
+        viewModelScope.launch {
+            when (val result = repository.getNotificationCount()) {
+                is ApiResult.Success -> {
+                    _unreadNotificationCount.value = result.data?.unreadCount ?: 0
+                }
+                is ApiResult.Error -> {}
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
     fun resetState() {
         _loginState.value = LoginState.Idle
+    }
+
+    fun getFollowingList() {
+        viewModelScope.launch {
+            when (val result = repository.getFollowingList()) {
+                is ApiResult.Success -> {
+                    _followingList.value = result.data?.safeList() ?: emptyList()
+                }
+                is ApiResult.Error -> {}
+                ApiResult.Loading -> {}
+            }
+        }
     }
 }
 

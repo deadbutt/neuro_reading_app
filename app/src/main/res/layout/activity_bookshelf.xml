@@ -64,7 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="@string/shelf_tab_reading"
+                android:text="@string/shelf_tab_all"
                 android:textColor="@color/primary_red"
                 android:textSize="@dimen/tab_text_size"
                 android:textStyle="bold" />
@@ -82,7 +82,7 @@
             android:id="@+id/tv_shelf_tab_read"
             style="@style/TabTextStyle"
             android:layout_height="match_parent"
-            android:text="@string/shelf_tab_read" />
+            android:text="@string/shelf_tab_favorite" />
 
         <TextView
             android:id="@+id/tv_shelf_tab_subscribe"

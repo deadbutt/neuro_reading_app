@@ -9,7 +9,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.example.neuro.UserManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -39,6 +42,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupBottomNav()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkUnreadNotifications()
     }
 
     fun navigateToSearch() {
@@ -90,5 +98,24 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .commit()
+    }
+
+    fun checkUnreadNotifications() {
+        val dot = findViewById<View>(R.id.v_nav_mine_dot)
+        if (!UserManager.isLoggedIn(this)) {
+            dot.visibility = View.GONE
+            return
+        }
+        lifecycleScope.launch {
+            try {
+                val response = com.example.neuro.api.RetrofitClient.apiService.getNotificationCount()
+                if (response.isSuccessful && response.body()?.code == 0) {
+                    val count = response.body()?.data?.unreadCount ?: 0
+                    dot.visibility = if (count > 0) View.VISIBLE else View.GONE
+                }
+            } catch (_: Exception) {
+                dot.visibility = View.GONE
+            }
+        }
     }
 }

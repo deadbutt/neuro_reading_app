@@ -25,11 +25,11 @@ class BookshelfViewModel @Inject constructor(
 
     private var isEditMode = false
 
-    fun loadBookshelf() {
+    fun loadBookshelf(category: String = "all") {
         viewModelScope.launch {
             _uiState.value = BookshelfUiState.Loading
 
-            when (val result = articleRepository.getBookshelf()) {
+            when (val result = articleRepository.getBookshelf(category = category)) {
                 is ApiResult.Success -> {
                     val shelfItems = result.data?.safeList()?.map { item ->
                         ShelfItem(
@@ -41,7 +41,8 @@ class BookshelfViewModel @Inject constructor(
                             coverUrl = item.cover,
                             lastReadChapter = item.lastReadChapter,
                             chapterIndex = item.chapterIndex,
-                            isFinished = item.isFinished
+                            isFinished = item.isFinished,
+                            isFavorite = item.isFavorite
                         )
                     } ?: emptyList()
                     _books.value = shelfItems

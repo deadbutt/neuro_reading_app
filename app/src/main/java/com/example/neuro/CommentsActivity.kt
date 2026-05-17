@@ -34,7 +34,6 @@ class CommentsActivity : AppCompatActivity() {
     private lateinit var articleId: String
     private lateinit var tvSortHot: TextView
     private lateinit var tvSortNew: TextView
-    private lateinit var tvSortAuthor: TextView
     private lateinit var vIndicatorHot: View
     private lateinit var tvCommentCount: TextView
     private var currentSort: String = "hot"
@@ -54,7 +53,6 @@ class CommentsActivity : AppCompatActivity() {
 
         tvSortHot = findViewById(R.id.tv_sort_hot)
         tvSortNew = findViewById(R.id.tv_sort_new)
-        tvSortAuthor = findViewById(R.id.tv_sort_author)
         vIndicatorHot = findViewById(R.id.v_indicator_hot)
         tvCommentCount = findViewById(R.id.tv_comment_count)
 
@@ -74,33 +72,15 @@ class CommentsActivity : AppCompatActivity() {
                     sort = currentSort
                 )
                 
-                android.util.Log.d("CommentsDebug", "HTTP isSuccessful=${response.isSuccessful}, code=${response.code()}")
-                
                 if (!response.isSuccessful) {
-                    android.util.Log.d("CommentsDebug", "HTTP not successful")
                     tvCommentCount.text = "0条"
-                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
                     srl.isRefreshing = false
                     return@launch
                 }
                 
                 val body = response.body()
-                android.util.Log.d("CommentsDebug", "body=$body")
-                
-                if (body == null) {
-                    android.util.Log.d("CommentsDebug", "body is null!")
+                if (body == null || body.code != 0) {
                     tvCommentCount.text = "0条"
-                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
-                    srl.isRefreshing = false
-                    return@launch
-                }
-                
-                android.util.Log.d("CommentsDebug", "body.code=${body.code}")
-                
-                if (body.code != 0) {
-                    android.util.Log.d("CommentsDebug", "body.code != 0")
-                    tvCommentCount.text = "0条"
-                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
                     srl.isRefreshing = false
                     return@launch
                 }
@@ -108,8 +88,6 @@ class CommentsActivity : AppCompatActivity() {
                 val paginatedData = body.data
                 val total = paginatedData?.total ?: 0
                 val commentsList = paginatedData?.list ?: emptyList()
-                
-                android.util.Log.d("CommentsDebug", "total=$total, listSize=${commentsList.size}")
                 
                 val newComments = commentsList.map { it.toCommentItem() }
                 
@@ -119,16 +97,13 @@ class CommentsActivity : AppCompatActivity() {
                     comments.clear()
                 }
                 
-                if (newComments.isEmpty() && currentPage == 1) {
-                    Toast.makeText(this@CommentsActivity, "暂无评论，快来抢沙发吧", Toast.LENGTH_SHORT).show()
-                } else {
+                if (newComments.isNotEmpty()) {
                     comments.addAll(newComments)
                     adapter.notifyDataSetChanged()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 tvCommentCount.text = "0条"
-                Toast.makeText(this@CommentsActivity, "网络错误，请检查网络连接", Toast.LENGTH_SHORT).show()
             } finally {
                 srl.isRefreshing = false
             }
@@ -137,12 +112,17 @@ class CommentsActivity : AppCompatActivity() {
 
     private fun CommentResponse.toCommentItem(): CommentItem {
         return CommentItem(
+            commentId = this.commentId,
             name = this.userName,
             avatarUrl = UrlUtils.normalize(this.userAvatar),
             time = this.createTime,
             content = this.content,
             likes = formatCount(this.likeCount),
-            isAuthor = false
+            likeCount = this.likeCount,
+            isLiked = this.isLiked,
+            isAuthor = false,
+            replyCount = this.replyCount,
+            replies = this.replies ?: emptyList()
         )
     }
 
@@ -157,7 +137,7 @@ class CommentsActivity : AppCompatActivity() {
     }
 
     private fun setupSortTabs() {
-        val tabs = listOf(tvSortHot, tvSortNew, tvSortAuthor)
+        val tabs = listOf(tvSortHot, tvSortNew)
         tabs.forEachIndexed { index, tv ->
             tv.setOnClickListener { selectSort(index) }
         }
@@ -167,11 +147,10 @@ class CommentsActivity : AppCompatActivity() {
         currentSort = when (index) {
             0 -> "hot"
             1 -> "new"
-            2 -> "author"
             else -> "hot"
         }
         currentPage = 1
-        val tabs = listOf(tvSortHot, tvSortNew, tvSortAuthor)
+        val tabs = listOf(tvSortHot, tvSortNew)
         for ((i, tv) in tabs.withIndex()) {
             if (i == index) {
                 tv.setTextColor(getColor(R.color.primary_red))
@@ -188,14 +167,48 @@ class CommentsActivity : AppCompatActivity() {
         val rv = findViewById<RecyclerView>(R.id.rv_comments)
         rv.layoutManager = LinearLayoutManager(this)
         adapter = CommentAdapter(comments,
-            onLikeClick = { _, _ ->
-                Toast.makeText(this, R.string.msg_like_success, Toast.LENGTH_SHORT).show()
+            onLikeClick = { comment, position ->
+                likeComment(comment, position)
             },
-            onReplyClick = {
-                Toast.makeText(this, R.string.msg_reply_feature, Toast.LENGTH_SHORT).show()
+            onReplyClick = { comment ->
+                showReplyInput(comment)
+            },
+            onViewMoreReplies = { comment, position ->
+                Toast.makeText(this, "查看更多回复功能开发中", Toast.LENGTH_SHORT).show()
             }
         )
         rv.adapter = adapter
+    }
+
+    private fun likeComment(comment: CommentItem, position: Int) {
+        val newIsLiked = !comment.isLiked
+        val newLikeCount = if (newIsLiked) comment.likeCount + 1 else comment.likeCount - 1
+        comments[position] = comment.copy(isLiked = newIsLiked, likeCount = newLikeCount, likes = formatCount(newLikeCount))
+        adapter.notifyItemChanged(position)
+
+        lifecycleScope.launch {
+            try {
+                val response = if (newIsLiked) {
+                    RetrofitClient.apiService.likeComment(comment.commentId)
+                } else {
+                    RetrofitClient.apiService.unlikeComment(comment.commentId)
+                }
+                if (!response.isSuccessful) {
+                    comments[position] = comment.copy(isLiked = comment.isLiked, likeCount = comment.likeCount, likes = formatCount(comment.likeCount))
+                    adapter.notifyItemChanged(position)
+                }
+            } catch (e: Exception) {
+                comments[position] = comment.copy(isLiked = comment.isLiked, likeCount = comment.likeCount, likes = formatCount(comment.likeCount))
+                adapter.notifyItemChanged(position)
+            }
+        }
+    }
+
+    private fun showReplyInput(comment: CommentItem) {
+        val input = findViewById<EditText>(R.id.et_comment_input)
+        input.hint = "回复 ${comment.name}:"
+        input.tag = comment.commentId
+        input.requestFocus()
     }
 
     private fun setupSwipeRefresh() {
@@ -219,13 +232,16 @@ class CommentsActivity : AppCompatActivity() {
     private fun postComment(content: String, input: EditText) {
         lifecycleScope.launch {
             try {
+                val parentId = input.tag as? String
                 val response = RetrofitClient.apiService.postComment(
                     articleId = articleId,
-                    request = PostCommentRequest(content = content)
+                    request = PostCommentRequest(content = content, parentId = parentId)
                 )
                 if (response.isSuccessful && response.body()?.code == Constants.ApiCode.SUCCESS) {
                     Toast.makeText(this@CommentsActivity, R.string.msg_comment_sent, Toast.LENGTH_SHORT).show()
                     input.text.clear()
+                    input.hint = getString(R.string.comments_hint)
+                    input.tag = null
                     currentPage = 1
                     loadComments()
                 } else {

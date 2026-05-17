@@ -72,29 +72,45 @@
                 android:text="@string/bottom_reading" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/ll_nav_mine"
+        <FrameLayout
+            android:id="@+id/fl_nav_mine"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
+            android:layout_weight="1">
 
-            <ImageView
-                android:id="@+id/iv_nav_mine"
-                android:layout_width="@dimen/bottom_nav_icon_size"
-                android:layout_height="@dimen/bottom_nav_icon_size"
-                android:contentDescription="@string/bottom_mine"
-                android:src="@drawable/ic_mine" />
-
-            <TextView
-                android:id="@+id/tv_nav_mine"
-                style="@style/BottomNavTextStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <LinearLayout
+                android:id="@+id/ll_nav_mine"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="@string/bottom_mine" />
-        </LinearLayout>
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/iv_nav_mine"
+                    android:layout_width="@dimen/bottom_nav_icon_size"
+                    android:layout_height="@dimen/bottom_nav_icon_size"
+                    android:contentDescription="@string/bottom_mine"
+                    android:src="@drawable/ic_mine" />
+
+                <TextView
+                    android:id="@+id/tv_nav_mine"
+                    style="@style/BottomNavTextStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/bottom_mine" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/v_nav_mine_dot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_gravity="top|center_horizontal"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/bg_hot_dot"
+                android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
 
 </RelativeLayout>

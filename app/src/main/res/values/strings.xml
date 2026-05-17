@@ -31,6 +31,7 @@
     <string name="book_add_shelf">加入书架</string>
 
     <string name="detail_title">书籍详情</string>
+    <string name="detail_favorite">收藏</string>
     <string name="detail_author">作者：天蚕土豆</string>
     <string name="detail_word_count">520万字</string>
     <string name="detail_readers">320万人在读</string>
@@ -95,12 +96,11 @@
 
     <string name="profile_click_login">点击登录</string>
     <string name="profile_login_desc">登录后可同步阅读记录</string>
-    <string name="profile_shelf_count">书架收藏</string>
-    <string name="profile_shelf_num">12</string>
     <string name="profile_time_count">阅读时长</string>
     <string name="profile_time_num">56h</string>
     <string name="profile_coin_count">牛币</string>
     <string name="profile_coin_num">888</string>
+    <string name="profile_menu_messages">我的消息</string>
     <string name="profile_menu_history">阅读历史</string>
     <string name="profile_menu_cache">离线缓存</string>
     <string name="profile_menu_rewards">福利中心</string>
@@ -126,15 +126,17 @@
     <string name="shelf_title">在读文章</string>
     <string name="shelf_edit">编辑</string>
     <string name="shelf_done">完成</string>
-    <string name="shelf_tab_reading">在读</string>
-    <string name="shelf_tab_read">读过</string>
+    <string name="shelf_tab_all">全部</string>
+    <string name="shelf_tab_favorite">收藏</string>
     <string name="shelf_tab_subscribe">订阅</string>
     <string name="shelf_empty_title">暂无书籍</string>
     <string name="shelf_empty_hint">快去书城逛逛，把喜欢的书加入书架吧</string>
     <string name="shelf_empty_btn">去逛逛</string>
     <string name="shelf_select_all">全选</string>
     <string name="shelf_delete">删除</string>
-    <string name="shelf_progress">已读</string>
+    <string name="shelf_progress">已读 %d%%</string>
+    <string name="shelf_reading_progress">已读 %d%%</string>
+    <string name="shelf_finished">已读完</string>
     <string name="shelf_tag_xuanhuan">玄幻</string>
     <string name="shelf_tag_dushi">都市</string>
     <string name="shelf_tag_xiuzhen">修真</string>

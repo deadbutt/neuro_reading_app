@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/app_background"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/detail_top_bar_height"
+        android:background="@color/white"
+        android:elevation="@dimen/elevation_2dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <ImageView
+            android:id="@+id/iv_back"
+            android:layout_width="@dimen/detail_top_icon_size"
+            android:layout_height="@dimen/detail_top_icon_size"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/detail_title"
+            android:padding="4dp"
+            android:src="@drawable/ic_back_arrow" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="@string/profile_menu_messages"
+            android:textColor="@color/text_primary"
+            android:textSize="@dimen/text_large"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_mark_all_read"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="8dp"
+            android:text="全部已读"
+            android:textColor="@color/primary_red"
+            android:textSize="@dimen/text_body" />
+    </RelativeLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_notifications"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/app_background"
+            android:clipToPadding="false"
+            android:paddingTop="2dp"
+            android:paddingBottom="60dp" />
+
+        <LinearLayout
+            android:id="@+id/ll_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/app_background"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:contentDescription="暂无消息"
+                android:src="@drawable/ic_notification_bell"
+                android:tint="@color/text_hint" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="暂无消息"
+                android:textColor="@color/text_secondary"
+                android:textSize="@dimen/shelf_empty_text_size" />
+        </LinearLayout>
+    </FrameLayout>
+
+</LinearLayout>

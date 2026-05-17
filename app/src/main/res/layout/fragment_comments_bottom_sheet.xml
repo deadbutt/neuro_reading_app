@@ -90,17 +90,29 @@
                 android:background="@drawable/bg_tab_indicator" />
         </FrameLayout>
 
-        <TextView
-            android:id="@+id/tv_sort_new"
-            style="@style/TabTextStyle"
+        <FrameLayout
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:text="@string/comments_sort_new" />
+            android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/tv_sort_author"
-            style="@style/TabTextStyle"
-            android:layout_height="44dp"
-            android:text="@string/comments_sort_author" />
+            <TextView
+                android:id="@+id/tv_sort_new"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/comments_sort_new"
+                android:textColor="@color/tab_inactive"
+                android:textSize="@dimen/tab_text_size" />
+
+            <View
+                android:id="@+id/v_indicator_new"
+                android:layout_width="@dimen/tab_indicator_width"
+                android:layout_height="@dimen/tab_indicator_height"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_marginBottom="4dp"
+                android:background="@drawable/bg_tab_indicator"
+                android:visibility="invisible" />
+        </FrameLayout>
     </LinearLayout>
 
     <View

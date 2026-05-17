@@ -41,9 +41,18 @@
             android:orientation="horizontal">
 
             <ImageView
+                android:id="@+id/iv_favorite"
+                android:layout_width="@dimen/detail_top_icon_size"
+                android:layout_height="@dimen/detail_top_icon_size"
+                android:contentDescription="@string/detail_favorite"
+                android:padding="4dp"
+                android:src="@drawable/ic_star_empty" />
+
+            <ImageView
                 android:id="@+id/iv_more_menu"
                 android:layout_width="@dimen/detail_top_icon_size"
                 android:layout_height="@dimen/detail_top_icon_size"
+                android:layout_marginStart="4dp"
                 android:contentDescription="@string/detail_title"
                 android:padding="4dp"
                 android:src="@drawable/ic_more_menu" />

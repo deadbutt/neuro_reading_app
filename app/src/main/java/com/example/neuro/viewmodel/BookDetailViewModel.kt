@@ -75,4 +75,35 @@ class BookDetailViewModel @Inject constructor(
             }
         }
     }
+
+    private val _favoriteStatus = MutableStateFlow(false)
+    val favoriteStatus: StateFlow<Boolean> = _favoriteStatus.asStateFlow()
+
+    fun loadFavoriteStatus(articleId: String) {
+        viewModelScope.launch {
+            when (val result = repository.getFavoriteStatus(articleId)) {
+                is ApiResult.Success -> {
+                    _favoriteStatus.value = result.data?.isFavorite ?: false
+                }
+                is ApiResult.Error -> {}
+                ApiResult.Loading -> {}
+            }
+        }
+    }
+
+    fun toggleFavorite(articleId: String, onSuccess: (Boolean) -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            when (val result = repository.toggleFavorite(articleId)) {
+                is ApiResult.Success -> {
+                    val newState = result.data?.isFavorite ?: false
+                    _favoriteStatus.value = newState
+                    onSuccess(newState)
+                }
+                is ApiResult.Error -> {
+                    onError(result.message)
+                }
+                ApiResult.Loading -> {}
+            }
+        }
+    }
 }

@@ -66,10 +66,17 @@ class ProfileFragment : Fragment() {
                         val normalizedAvatar = UrlUtils.normalize(it.avatar)
                         UserManager.updateProfile(requireContext(), it.nickname, normalizedAvatar)
                         binding.tvNickname.text = it.nickname
-                        binding.tvShelfNum.text = it.bookshelfCount.toString()
                         binding.tvTimeNum.text = formatDuration(it.readDuration)
                         loadAvatar(normalizedAvatar)
                     }
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.unreadNotificationCount.collect { count ->
+                    binding.vMessageDot.visibility = if (count > 0) View.VISIBLE else View.GONE
                 }
             }
         }
@@ -99,9 +106,9 @@ class ProfileFragment : Fragment() {
         binding.llMenuCreator.setOnClickListener {
             startActivity(Intent(requireContext(), CreateCenterActivity::class.java))
         }
-        binding.llShelfCard.setOnClickListener {
+        binding.llMenuMessages.setOnClickListener {
             if (checkLogin()) {
-                BookshelfActivity.start(requireContext())
+                startActivity(Intent(requireContext(), NotificationActivity::class.java))
             }
         }
         binding.llMenuHistory.setOnClickListener {
@@ -153,7 +160,6 @@ class ProfileFragment : Fragment() {
             binding.btnLogout.visibility = View.GONE
 
             binding.ivProfileAvatar.setImageResource(R.drawable.bg_profile_avatar)
-            binding.tvShelfNum.text = "0"
             binding.tvTimeNum.text = "0"
         }
     }
@@ -291,6 +297,9 @@ class ProfileFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         refreshUI()
+        if (UserManager.isLoggedIn(requireContext())) {
+            viewModel.getNotificationCount()
+        }
     }
 
     override fun onDestroyView() {

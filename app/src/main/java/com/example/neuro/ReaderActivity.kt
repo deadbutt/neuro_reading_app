@@ -22,6 +22,8 @@ import com.example.neuro.base.UiState
 import com.example.neuro.databinding.ActivityReaderBinding
 import com.example.neuro.viewmodel.ReaderViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -62,6 +64,7 @@ class ReaderActivity : AppCompatActivity() {
     private var currentScrollPosition = 0
 
     private lateinit var paragraphAdapter: ParagraphAdapter
+    private var autoSaveJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,8 +88,53 @@ class ReaderActivity : AppCompatActivity() {
         setupReaderRecyclerView()
         setupBrightnessControl()
         observeViewModel()
+        startAutoSaveProgress()
 
         viewModel.loadArticleMeta(articleId)
+    }
+
+    private fun startAutoSaveProgress() {
+        autoSaveJob = lifecycleScope.launch {
+            while (true) {
+                delay(30000)
+                if (::articleId.isInitialized && articleId.isNotEmpty() && chapters.isNotEmpty()) {
+                    val progress = binding.sbReaderProgress.progress
+                    viewModel.saveProgress(articleId, currentChapterIndex, progress, currentScrollPosition)
+                }
+            }
+        }
+    }
+
+    private fun doSaveProgress() {
+        if (!::articleId.isInitialized || articleId.isEmpty() || chapters.isEmpty()) return
+        val items = paragraphAdapter.currentItems.filter { it !is ReaderItem.Loading }
+        val totalItems = items.size
+        val layoutManager = binding.rvReaderBody.layoutManager as? LinearLayoutManager
+        val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
+        val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: firstVisible
+
+        val visibleItems = paragraphAdapter.currentItems
+        var filteredFirstVisible = 0
+        var visibleCount = 0
+        for (i in visibleItems.indices) {
+            if (visibleItems[i] !is ReaderItem.Loading) {
+                if (i <= firstVisible) {
+                    filteredFirstVisible = visibleCount
+                }
+                visibleCount++
+            }
+        }
+
+        val progress = if (totalItems > 0) {
+            if (lastVisible >= paragraphAdapter.itemCount - 1 && paragraphAdapter.currentItems.lastOrNull() !is ReaderItem.Loading) {
+                100
+            } else {
+                ((filteredFirstVisible + 1) * 100 / totalItems).coerceIn(0, 100)
+            }
+        } else {
+            (currentChapterIndex + 1) * 100 / chapters.size
+        }
+        viewModel.saveProgress(articleId, currentChapterIndex, progress, currentScrollPosition)
     }
 
     private fun observeViewModel() {
@@ -619,37 +667,18 @@ class ReaderActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        doSaveProgress()
+    }
+
     override fun onStop() {
         super.onStop()
-        if (::articleId.isInitialized && articleId.isNotEmpty() && chapters.isNotEmpty()) {
-            val items = paragraphAdapter.currentItems.filter { it !is ReaderItem.Loading }
-            val totalItems = items.size
-            val layoutManager = binding.rvReaderBody.layoutManager as? LinearLayoutManager
-            val firstVisible = layoutManager?.findFirstVisibleItemPosition() ?: 0
-            val lastVisible = layoutManager?.findLastVisibleItemPosition() ?: firstVisible
+        doSaveProgress()
+    }
 
-            val visibleItems = paragraphAdapter.currentItems
-            var filteredFirstVisible = 0
-            var visibleCount = 0
-            for (i in visibleItems.indices) {
-                if (visibleItems[i] !is ReaderItem.Loading) {
-                    if (i <= firstVisible) {
-                        filteredFirstVisible = visibleCount
-                    }
-                    visibleCount++
-                }
-            }
-
-            val progress = if (totalItems > 0) {
-                if (lastVisible >= paragraphAdapter.itemCount - 1) {
-                    100
-                } else {
-                    ((filteredFirstVisible + 1) * 100 / totalItems).coerceIn(0, 100)
-                }
-            } else {
-                (currentChapterIndex + 1) * 100 / chapters.size
-            }
-            viewModel.saveProgress(articleId, currentChapterIndex, progress, currentScrollPosition)
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        autoSaveJob?.cancel()
     }
 }

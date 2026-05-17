@@ -40,6 +40,8 @@ class AuthorProfileActivity : AppCompatActivity() {
 
     private val dynamicItems = mutableListOf<FeedActivityItem>()
     private val worksItems = mutableListOf<BookItem>()
+    private var worksAdapter: BookAdapter? = null
+    private var dynamicAdapter: FeedActivityAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,10 +57,38 @@ class AuthorProfileActivity : AppCompatActivity() {
 
         binding.ivBack.setOnClickListener { finish() }
 
+        setupRecyclerView()
         setupTabs()
         observeViewModel()
         viewModel.loadAuthorProfile(authorId)
         viewModel.loadWorks(authorId)
+        viewModel.loadFollowStatus(authorId)
+    }
+
+    private fun setupRecyclerView() {
+        binding.rvAuthorContent.layoutManager = LinearLayoutManager(this)
+        
+        dynamicAdapter = FeedActivityAdapter(
+            items = dynamicItems,
+            onItemClick = { item ->
+                Toast.makeText(this, "查看动态: ${item.activityContent}", Toast.LENGTH_SHORT).show()
+            },
+            onLikeClick = { _, _ ->
+                Toast.makeText(this, "点赞成功", Toast.LENGTH_SHORT).show()
+            },
+            onCommentClick = { _ ->
+                CommentsBottomSheet().show(supportFragmentManager, "comments")
+            }
+        )
+        
+        worksAdapter = BookAdapter(worksItems) { book ->
+            if (book.bookId.isNotEmpty()) {
+                BookDetailActivity.start(this, book.bookId)
+            }
+        }
+        
+        binding.rvAuthorContent.adapter = dynamicAdapter
+        showDynamicList()
     }
 
     private fun observeViewModel() {
@@ -77,12 +107,16 @@ class AuthorProfileActivity : AppCompatActivity() {
                                     binding.tvWorksCount.text = "${author.worksCount}"
                                     binding.tvTotalWords.text = "${author.totalWords}"
 
-                                    if (author.avatar.isNotEmpty()) {
+                                    val avatarUrl = author.avatar.takeIf { it.isNotEmpty() }
+                                        ?: viewModel.works.value.firstOrNull()?.cover
+                                    if (!avatarUrl.isNullOrEmpty()) {
                                         Glide.with(this@AuthorProfileActivity)
-                                            .load(UrlUtils.normalize(author.avatar))
+                                            .load(UrlUtils.normalize(avatarUrl))
                                             .placeholder(R.drawable.bg_avatar_placeholder)
                                             .circleCrop()
                                             .into(binding.ivAuthorAvatar)
+                                    } else {
+                                        binding.ivAuthorAvatar.setImageResource(R.drawable.bg_avatar_placeholder)
                                     }
                                 }
                             }
@@ -105,15 +139,16 @@ class AuthorProfileActivity : AppCompatActivity() {
 
                 launch {
                     viewModel.works.collect { works ->
-                        worksItems.clear()
-                        worksItems.addAll(works.map { article ->
+                        val newItems = works.map { book ->
                             BookItem(
-                                bookId = article.articleId,
-                                title = article.title,
-                                author = article.author,
-                                desc = article.summary
+                                bookId = book.bookId,
+                                title = book.title,
+                                author = book.author.name,
+                                desc = book.description,
+                                coverUrl = book.cover ?: ""
                             )
-                        })
+                        }
+                        worksAdapter?.updateData(newItems)
                         if (currentTab == 1) {
                             showWorksList()
                         }
@@ -163,35 +198,18 @@ class AuthorProfileActivity : AppCompatActivity() {
         unselected.setTextColor(getColor(R.color.tab_inactive))
         unselected.setTypeface(null, Typeface.NORMAL)
 
-        val parent = selected.parent as? android.widget.FrameLayout
-        val unselectedParent = unselected.parent as? android.widget.FrameLayout
-        parent?.removeView(indicator)
-        unselectedParent?.removeView(indicator)
-        parent?.addView(indicator)
+        (indicator.parent as? android.view.ViewGroup)?.removeView(indicator)
+        (selected.parent as? android.widget.FrameLayout)?.addView(indicator)
     }
 
     private fun showDynamicList() {
-        binding.rvAuthorContent.layoutManager = LinearLayoutManager(this)
-        binding.rvAuthorContent.adapter = FeedActivityAdapter(
-            items = dynamicItems,
-            onItemClick = { item ->
-                Toast.makeText(this, "查看动态: ${item.activityContent}", Toast.LENGTH_SHORT).show()
-            },
-            onLikeClick = { _, _ ->
-                Toast.makeText(this, "点赞成功", Toast.LENGTH_SHORT).show()
-            },
-            onCommentClick = { _ ->
-                CommentsBottomSheet().show(supportFragmentManager, "comments")
-            }
-        )
+        dynamicAdapter?.notifyDataSetChanged()
     }
 
     private fun showWorksList() {
-        binding.rvAuthorContent.layoutManager = LinearLayoutManager(this)
-        binding.rvAuthorContent.adapter = BookAdapter(worksItems) { book ->
-            if (book.bookId.isNotEmpty()) {
-                BookDetailActivity.start(this, book.bookId)
-            }
+        if (binding.rvAuthorContent.adapter !== worksAdapter) {
+            binding.rvAuthorContent.adapter = worksAdapter
         }
+        worksAdapter?.notifyDataSetChanged()
     }
 }

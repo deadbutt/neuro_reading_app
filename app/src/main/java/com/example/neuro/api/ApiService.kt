@@ -61,7 +61,8 @@ interface ApiService {
     @GET("api/v1/bookshelf")
     suspend fun getBookshelf(
         @Query("page") page: Int = 1,
-        @Query("pageSize") pageSize: Int = 20
+        @Query("pageSize") pageSize: Int = 20,
+        @Query("category") category: String = "all"
     ): Response<BaseResponse<PaginatedResponse<BookshelfItemResponse>>>
 
     @POST("api/v1/bookshelf/{articleId}")
@@ -75,6 +76,29 @@ interface ApiService {
         @Path("articleId") articleId: String,
         @Body request: UpdateProgressRequest
     ): Response<BaseResponse<Unit>>
+
+    @POST("api/v1/bookshelf/{articleId}/favorite")
+    suspend fun toggleFavorite(@Path("articleId") articleId: String): Response<BaseResponse<FavoriteStatusResponse>>
+
+    @GET("api/v1/bookshelf/{articleId}/favorite")
+    suspend fun getFavoriteStatus(@Path("articleId") articleId: String): Response<BaseResponse<FavoriteStatusResponse>>
+
+    // ==================== 消息通知相关 ====================
+
+    @GET("api/v1/notifications")
+    suspend fun getNotifications(
+        @Query("page") page: Int = 1,
+        @Query("pageSize") pageSize: Int = 20
+    ): Response<BaseResponse<PaginatedResponse<NotificationResponse>>>
+
+    @GET("api/v1/notifications/count")
+    suspend fun getNotificationCount(): Response<BaseResponse<NotificationCountResponse>>
+
+    @POST("api/v1/notifications/{notificationId}/read")
+    suspend fun markNotificationAsRead(@Path("notificationId") notificationId: String): Response<BaseResponse<Unit>>
+
+    @POST("api/v1/notifications/read-all")
+    suspend fun markAllNotificationsAsRead(): Response<BaseResponse<Unit>>
 
     // ==================== 文章相关 ====================
 
@@ -132,7 +156,7 @@ interface ApiService {
         @Path("authorId") authorId: String,
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 20
-    ): Response<BaseResponse<PaginatedResponse<ArticleIndex>>>
+    ): Response<BaseResponse<PaginatedResponse<BookResponse>>>
 
     @GET("api/v1/authors/{authorId}/activities")
     suspend fun getAuthorActivities(
@@ -140,6 +164,11 @@ interface ApiService {
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 20
     ): Response<BaseResponse<PaginatedResponse<AuthorActivityResponse>>>
+
+    @GET("api/v1/authors/{authorId}/follow-status")
+    suspend fun getAuthorFollowStatus(
+        @Path("authorId") authorId: String
+    ): Response<BaseResponse<FollowStatusResponse>>
 
     // ==================== 动态/关注流相关 ====================
 

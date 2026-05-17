@@ -5,6 +5,7 @@ import com.example.neuro.api.model.ArticleMeta
 import com.example.neuro.api.model.BookshelfItemResponse
 import com.example.neuro.api.model.ChapterContentResponse
 import com.example.neuro.api.model.CommentResponse
+import com.example.neuro.api.model.FavoriteStatusResponse
 import com.example.neuro.api.model.PaginatedResponse
 import com.example.neuro.api.model.PostCommentRequest
 import com.example.neuro.api.model.UpdateProgressRequest
@@ -26,10 +27,11 @@ class ArticleRepository @Inject constructor(
 
     suspend fun getBookshelf(
         page: Int = 1,
-        pageSize: Int = 20
+        pageSize: Int = 20,
+        category: String = "all"
     ): ApiResult<PaginatedResponse<BookshelfItemResponse>> {
         return ApiHelper.safeApiCallWithMessage {
-            apiService.getBookshelf(page, pageSize)
+            apiService.getBookshelf(page, pageSize, category)
         }
     }
 
@@ -74,6 +76,18 @@ class ArticleRepository @Inject constructor(
     suspend fun updateReadingProgress(articleId: String, chapterIndex: Int, progress: Int, position: Int): ApiResult<Unit> {
         return ApiHelper.safeApiCallWithMessage {
             apiService.updateReadingProgress(articleId, UpdateProgressRequest(chapterIndex, progress, position))
+        }
+    }
+
+    suspend fun toggleFavorite(articleId: String): ApiResult<FavoriteStatusResponse> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.toggleFavorite(articleId)
+        }
+    }
+
+    suspend fun getFavoriteStatus(articleId: String): ApiResult<FavoriteStatusResponse> {
+        return ApiHelper.safeApiCallWithMessage {
+            apiService.getFavoriteStatus(articleId)
         }
     }
 

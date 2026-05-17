@@ -18,7 +18,7 @@ data class BookItem(
 )
 
 class BookAdapter(
-    private val books: List<BookItem>,
+    private val books: MutableList<BookItem>,
     private val onItemClick: (BookItem) -> Unit
 ) : RecyclerView.Adapter<BookAdapter.ViewHolder>() {
 
@@ -59,6 +59,12 @@ class BookAdapter(
     }
 
     override fun getItemCount(): Int = books.size
+    
+    fun updateData(newBooks: List<BookItem>) {
+        books.clear()
+        books.addAll(newBooks)
+        notifyDataSetChanged()
+    }
     
     override fun onViewRecycled(holder: ViewHolder) {
         super.onViewRecycled(holder)

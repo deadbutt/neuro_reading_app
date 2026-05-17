@@ -15,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.neuro.api.RetrofitClient
 import com.example.neuro.api.model.ArticleMeta
 import com.example.neuro.api.model.CommentResponse
 import com.example.neuro.base.UiState
@@ -42,6 +43,11 @@ class BookDetailActivity : AppCompatActivity() {
     private val viewModel: BookDetailViewModel by viewModels()
     private lateinit var articleId: String
     private var articleMeta: ArticleMeta? = null
+    private var isFavorite = false
+
+    // 保存预览评论数据，用于点赞后更新
+    private var previewCommentItems = mutableListOf<CommentItem>()
+    private var previewCommentAdapter: CommentAdapter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +64,7 @@ class BookDetailActivity : AppCompatActivity() {
         setupListeners()
         observeViewModel()
         viewModel.loadArticleDetail(articleId)
+        viewModel.loadFavoriteStatus(articleId)
     }
 
     private fun setupListeners() {
@@ -70,6 +77,27 @@ class BookDetailActivity : AppCompatActivity() {
         binding.tvReviewsViewAll.setOnClickListener { showComments() }
         binding.ivShare.setOnClickListener { shareArticle() }
         binding.llAuthorInfo.setOnClickListener { goToAuthorProfile() }
+        binding.ivFavorite.setOnClickListener { toggleFavorite() }
+    }
+
+    private fun toggleFavorite() {
+        viewModel.toggleFavorite(articleId,
+            onSuccess = { newState ->
+                isFavorite = newState
+                updateFavoriteIcon()
+                val msg = if (isFavorite) "已收藏" else "已取消收藏"
+                showToast(msg)
+            },
+            onError = { msg ->
+                showToast(msg)
+            }
+        )
+    }
+
+    private fun updateFavoriteIcon() {
+        binding.ivFavorite.setImageResource(
+            if (isFavorite) R.drawable.ic_star_filled else R.drawable.ic_star_empty
+        )
     }
 
     private fun observeViewModel() {
@@ -99,6 +127,13 @@ class BookDetailActivity : AppCompatActivity() {
                 launch {
                     viewModel.previewComments.collect { comments ->
                         displayPreviewComments(comments)
+                    }
+                }
+
+                launch {
+                    viewModel.favoriteStatus.collect { status ->
+                        isFavorite = status
+                        updateFavoriteIcon()
                     }
                 }
             }
@@ -135,26 +170,62 @@ class BookDetailActivity : AppCompatActivity() {
         binding.tvReviewsEmpty.visibility = View.GONE
         binding.tvReviewsCount.text = "${comments.size}"
 
-        val commentItems = comments.map { it.toCommentItem() }
+        previewCommentItems = comments.map { it.toCommentItem() }.toMutableList()
         binding.rvReviewsPreview.layoutManager = LinearLayoutManager(this)
-        binding.rvReviewsPreview.adapter = CommentAdapter(commentItems,
-            onLikeClick = { _, _ ->
-                Toast.makeText(this, R.string.msg_like_success, Toast.LENGTH_SHORT).show()
+        previewCommentAdapter = CommentAdapter(previewCommentItems,
+            onLikeClick = { comment, position ->
+                likePreviewComment(comment, position)
             },
             onReplyClick = {
                 showComments()
             }
         )
+        binding.rvReviewsPreview.adapter = previewCommentAdapter
+    }
+
+    private fun likePreviewComment(comment: CommentItem, position: Int) {
+        val newIsLiked = !comment.isLiked
+        val newLikeCount = if (newIsLiked) comment.likeCount + 1 else comment.likeCount - 1
+        val newItem = comment.copy(
+            isLiked = newIsLiked,
+            likeCount = newLikeCount,
+            likes = formatCount(newLikeCount)
+        )
+        previewCommentItems[position] = newItem
+        previewCommentAdapter?.notifyItemChanged(position)
+
+        lifecycleScope.launch {
+            try {
+                val response = if (newIsLiked) {
+                    RetrofitClient.apiService.likeComment(comment.commentId)
+                } else {
+                    RetrofitClient.apiService.unlikeComment(comment.commentId)
+                }
+                if (!response.isSuccessful) {
+                    // 回滚
+                    previewCommentItems[position] = comment
+                    previewCommentAdapter?.notifyItemChanged(position)
+                }
+            } catch (e: Exception) {
+                previewCommentItems[position] = comment
+                previewCommentAdapter?.notifyItemChanged(position)
+            }
+        }
     }
 
     private fun CommentResponse.toCommentItem(): CommentItem {
         return CommentItem(
+            commentId = this.commentId,
             name = this.userName,
             avatarUrl = UrlUtils.normalize(this.userAvatar),
             time = this.createTime,
             content = this.content,
             likes = formatCount(this.likeCount),
-            isAuthor = false
+            likeCount = this.likeCount,
+            isLiked = this.isLiked,
+            isAuthor = false,
+            replyCount = this.replyCount,
+            replies = this.replies ?: emptyList()
         )
     }
 
